@@ -1,0 +1,128 @@
+<%- include("partials/header"); -%> <%- include("partials/side-panel"); -%>
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-12">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              <a href="<%= base_url %>admin/home">Home</a>
+            </li>
+            <li class="breadcrumb-item active">Product List</li>
+          </ol>
+        </div>
+      </div>
+      <!-- /.row -->
+    </div>
+    <!-- /.container-fluid -->
+  </div>
+  <!-- /.content-header -->
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card card-default color-palette-box">
+        <div class="card-header">
+          <h3 class="card-title">
+            <h5 class="m-0">Product List</h5>
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-12 ">
+              <div class="table-responsive" id="productList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- /.Main content -->
+</div>
+<!-- /.content-wrapper -->
+
+  <!-- Modal -->
+<div
+  class="modal fade"
+  id="addProductImageModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="exampleModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="exampleModalLabel">
+          Add Product Image
+        </h5>
+        <button
+          type="button"
+          class="close"
+          onclick="$('#addProductImageModal').modal('hide');"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="forms-sample row">
+          <input
+            type="hidden"
+            id="hidden_product_id"
+            name="hidden_product_id"
+            value="0"
+          />
+          <div class="form-group col-sm-8">
+            <label for="image_description"><b>Image Description</b></label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              id="image_description"
+              name="image_description"
+              placeholder="Enter Image Description..."
+            />
+          </div>
+          <div class="form-group col-sm-4">
+           <label for="priority"><b>No.</b></label>
+           <input
+             type="number"
+             class="form-control form-control-sm"
+             id="priority"
+             name="priority"
+             placeholder="Enter Image No..."
+           />
+         </div>
+          <div class="form-group col-sm-12">
+           <label for="image_file"><b>Image File</b></label>
+           <input
+             type="file"
+             class="form-control form-control-sm"
+             id="image_file"
+             name="image_file"
+             placeholder="Enter Image File..."
+           />
+         </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div id="addProductImageError"></div>
+        <button
+          type="button"
+          class="btn btn-secondary  btn-xs"
+          onclick="$('#addProductImageModal').modal('hide');"
+        >
+          Close
+        </button>
+        <button type="button" class="btn btn-primary btn-xs" onclick="addProductImage(this)";>Save</button>
+      </div>
+      <div class="modal-body">
+              <div class="row" id="ProductImagesDiv" ></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!--  -->
+<script src="../public/views-js/product-list.js"></script>
+<%- include("partials/footer"); -%>

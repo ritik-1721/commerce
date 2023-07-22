@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Demo</title>
+    <!-- Google Font: Source Sans Pro -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback"
+    />
+    <!-- Font Awesome Icons -->
+    <link
+      rel="stylesheet"
+      href="../public/includes/plugins/fontawesome-free/css/all.min.css"
+    />
+    <!-- overlayScrollbars -->
+    <link
+      rel="stylesheet"
+      href="../public/includes/plugins/overlayScrollbars/css/OverlayScrollbars.min.css"
+    />
+    <!-- Theme style -->
+    <link
+      rel="stylesheet"
+      href="../public/includes/dist/css/adminlte.min.css"
+    />
+    <!-- jQuery -->
+    <script src="../public/includes/plugins/jquery/jquery.min.js"></script>
+    <!-- Bootstrap -->
+    <script src="../public/includes/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap Switch -->
+    <script src="../public/includes/plugins/bootstrap-switch/js/bootstrap-switch.min.js"></script>
+
+    <!-- DataTables -->
+    <link
+      href="../public/includes/plugins/advance_datatable/jquery.dataTables.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="../public/includes/plugins/advance_datatable/buttons.dataTables.min.css"
+      rel="stylesheet"
+    />
+    <script
+      type="text/javascript"
+      src="../public/includes/plugins/advance_datatable/jquery.dataTables.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="../public/includes/plugins/advance_datatable/dataTables.buttons.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="../public/includes/plugins/advance_datatable/buttons.print.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="../public/includes/plugins/advance_datatable/buttons.colVis.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="../public/includes/plugins/advance_datatable/pdfmake.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="../public/includes/plugins/advance_datatable/vfs_fonts.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="../public/includes/plugins/advance_datatable/buttons.html5.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="../public/includes/plugins/advance_datatable/jszip.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="../public/includes/plugins/advance_datatable/sum.js"
+    ></script>
+    <link
+      href="../public/includes/plugins/advance_datatable/fixedColumns.dataTables.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script src="../public/includes/plugins/advance_datatable/dataTables.fixedColumns.js"></script>
+  </head>
+  <div id="base_url" data-base_url="<%= base_url %>" data-token="<%= userDate.token %>"></div>
+  <style>
+    /* .treeviewcss */
+    .treeview {
+      float: left;
+      width: 100%;
+      background-color: #f5f5f5;
+      padding: 15px 30px 30px;
+    }
+    .treeview ul {
+      list-style-type: none;
+      float: left;
+      width: 100%;
+      position: relative;
+    }
+    .treeview ul li {
+      list-style-type: none;
+      float: left;
+      width: 100%;
+      border-left: 1px solid #444;
+      padding: 10px 0;
+    }
+    .treeview ul li div {
+      float: left;
+      width: 100%;
+      font-family: Arial;
+      font-size: 15px;
+      color: #444;
+      line-height: 1.5;
+      padding-left: 33px;
+      position: relative;
+      bottom: -20px;
+    }
+    .treeview ul li div:before {
+      content: "";
+      width: 30px;
+      height: 1px;
+      background-color: #444;
+      position: absolute;
+      top: 50%;
+      bottom: 50%;
+      left: 0;
+    }
+    .treeview ul li div:hover {
+      color: coral;
+    }
+    .treeview ul li ul {
+      margin: 20px 0;
+    }
+    .treeview ul li ul li {
+      border-left-color: #aaa;
+      /* margin-left: 50px; */
+      width: calc(100% - 50px);
+    }
+    .treeview ul li ul li div {
+      color: #aaa;
+      padding-left: 15px;
+    }
+    .treeview ul li ul li div:before {
+      background-color: #aaa;
+      width: 10px;
+    }
+  </style>
+  <body
+    class="
+      hold-transition
+      sidebar-mini
+      layout-fixed layout-navbar-fixed layout-footer-fixed
+    "
+  >
+    <div class="wrapper"></div>
+  </body>
+</html>

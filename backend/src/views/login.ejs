@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title %></title>
+
+    <!-- Google Font: Source Sans Pro -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback"
+    />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="../public/includes/plugins/fontawesome-free/css/all.min.css"
+    />
+    <!-- icheck bootstrap -->
+    <link
+      rel="stylesheet"
+      href="../public/includes/plugins/icheck-bootstrap/icheck-bootstrap.min.css"
+    />
+    <!-- Theme style -->
+    <link
+      rel="stylesheet"
+      href="../public/includes/dist/css/adminlte.min.css"
+    />
+    <!-- jQuery -->
+    <script src="../public/includes/plugins/jquery/jquery.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="../public/includes/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+  </head>
+  <body class="hold-transition login-page">
+    <div id="base_url" data-base_url="<%= base_url %>"></div>
+    <div class="login-box">
+      <!-- /.login-logo -->
+      <div class="card card-outline">
+        <div class="card-header text-center">
+          <a href="<%= base_url %>" class="h1"
+            ><img
+              style="width: 129px"
+              src="../public/includes/dist/img/logo.png"
+          /></a>
+        </div>
+        <div class="card-body">
+          <p class="login-box-msg">Sign in to start your session</p>
+
+          <div class="input-group mb-3">
+            <input
+              type="email"
+              class="form-control"
+              id="user_email"
+              placeholder="Email"
+            />
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-envelope"></span>
+              </div>
+            </div>
+          </div>
+          <div class="input-group mb-3">
+            <input
+              type="password"
+              class="form-control"
+              id="user_password"
+              placeholder="Password"
+            />
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-lock"></span>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-8">
+              <div class="icheck-primary">
+                <!-- <input type="checkbox" id="remember">
+              <label for="remember">
+                Remember Me
+              </label> -->
+              </div>
+            </div>
+            <!-- /.col -->
+            <div class="col-4">
+              <button
+                type="button"
+                class="btn btn-primary btn-block"
+                id="login_btn"
+                onclick="validate_login();"
+              >
+                Sign In
+              </button>
+            </div>
+            <!-- /.col -->
+          </div>
+
+          <p class="mb-1 text-center" id="err_msg">&nbsp;</p>
+        </div>
+        <!-- /.card-body -->
+      </div>
+      <!-- /.card -->
+    </div>
+    <!-- /.login-box -->
+
+    <script src="../public/views-js/login.js"></script>
+    <script src="../public/includes/dist/js/adminlte.min.js"></script>
+    <script src="../public/helpers/validate.helpers.js"></script>
+  </body>
+</html>

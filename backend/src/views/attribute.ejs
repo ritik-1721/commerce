@@ -1,0 +1,183 @@
+<%- include("partials/header"); -%> <%- include("partials/side-panel"); -%>
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-12">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              <a href="<%= base_url %>admin/home">Home</a>
+            </li>
+            <li class="breadcrumb-item active">Attribute</li>
+          </ol>
+        </div>
+      </div>
+      <!-- /.row -->
+    </div>
+    <!-- /.container-fluid -->
+  </div>
+  <!-- /.content-header -->
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card card-default color-palette-box">
+        <div class="card-header">
+          <h3 class="card-title">
+            <h5 class="m-0">Attribute
+              <button type="button" 
+              onclick="$('#addAttributeModal').modal('show');$('#hidden_parent_id').val(0);"
+              class="btn btn-primary btn-xs float-right"> <i class="fa fa-plus-circle fa-fw"></i> Add Attribute <i>&nbsp;</i></button>
+            </h5>
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-12">
+              <div class="treeview" id="attributeList">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--/. container-fluid -->
+  </section>
+  <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+
+<!-- Modal -->
+<div
+class="modal fade"
+id="addAttributeModal"
+tabindex="-1"
+role="dialog"
+aria-labelledby="exampleModalLabel"
+aria-hidden="true"
+>
+<div class="modal-dialog" role="document">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title" id="exampleModalLabel">
+        Add Attribute
+      </h5>
+      <button
+        type="button"
+        class="close"
+        onclick="$('#addAttributeModal').modal('hide');"
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="forms-sample row">
+        <div class="form-group col-sm-12">
+          <label for="attribute_name"><b>Attribute Name</b></label>
+          <input
+            type="text"
+            class="form-control"
+            id="attribute_name"
+            name="attribute_name"
+            placeholder="Enter Attribute Name..."
+          />
+        </div>
+        <div class="form-group col-sm-12">
+          <label for="attribute_value_type"><b>Attribute Value Type</b></label>
+          <select id="attribute_value_type" name="attribute_value_type" class="form-control">
+                 <option value="text" selected >Text</option>
+                 <option value="color" >Color</option>
+                 <option value="file" >Image</option>
+                 <option value="number" >Number</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div id="addAttributeError"></div>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        onclick="$('#addAttributeModal').modal('hide');"
+      >
+        Close
+      </button>
+      <button type="button" class="btn btn-primary" onclick="addAttribute(this)";>Save</button>
+    </div>
+  </div>
+</div>
+</div>
+<!--  -->
+
+  <!-- Attribute Value Modal -->
+  <div
+  class="modal fade"
+  id="addAttributeValueModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="exampleModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="exampleModalLabel2">
+          Add Attribute Value
+        </h5>
+        <button
+          type="button"
+          class="close"
+          onclick="$('#addAttributeValueModal').modal('hide');"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <input type="hidden" id="hidden_attribute_id"  name="hidden_attribute_id" value="0"/>
+      <input type="hidden" id="hidden_attribute_value_type"  name="hidden_attribute_value_type" value="0"/>
+      <div class="modal-body">
+        <div class="forms-sample row">
+          <div class="form-group col-sm-12">
+            <label for="attribute_value"><b>Value</b></label>
+            <input
+              type="text"
+              class="form-control"
+              id="attribute_value"
+              name="attribute_value"
+              placeholder="Enter Value..."
+            />
+          </div>
+          <div class="form-group col-sm-12">
+            <label for="attribute_description"><b>Description</b></label>
+            <input
+              type="text"
+              class="form-control"
+              id="attribute_description"
+              name="attribute_description"
+              placeholder="Enter Description..."
+            />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div id="addAttributeValueError"></div>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="$('#addAttributeValueModal').modal('hide');"
+        >
+          Close
+        </button>
+        <button type="button" class="btn btn-primary" onclick="addAttributeValue(this)";>Save</button>
+      </div>
+      <div class="modal-body">
+       <div class="row"> <div class="col-sm-12" id="attribute_value_list"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!--  -->
+<script src="../public/views-js/attribute.js"></script>
+<%- include("partials/footer"); -%>

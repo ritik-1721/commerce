@@ -1,0 +1,179 @@
+<%- include("partials/header"); -%> <%- include("partials/side-panel"); -%>
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-12">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item">
+              <a href="<%= base_url %>admin/home">Home</a>
+            </li>
+            <li class="breadcrumb-item active">Add Product</li>
+          </ol>
+        </div>
+      </div>
+      <!-- /.row -->
+    </div>
+    <!-- /.container-fluid -->
+  </div>
+  <!-- /.content-header -->
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card card-default color-palette-box">
+        <div class="card-header">
+          <h3 class="card-title">
+            <h5 class="m-0">Add Product</h5>
+          </h3>
+        </div>
+        <div class="card-body">
+          <!-- FROM -->
+          <!-- enctype="multipart/form-data"  -->
+          <form class="forms-sample row" id="data"  method="post" enctype="multipart/form-data" >
+            <div class="form-group col-sm-6">
+              <label for="title">Title</label>
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                id="title"
+                name="title"
+                placeholder="Title"
+              />
+            </div>
+            <div class="form-group col-sm-6">
+              <label for="sub_title">Sub Title</label>
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                id="sub_title"
+                name="sub_title"
+                placeholder="Sub Title"
+              />
+            </div>
+            <div class="form-group col-sm-6">
+              <label for="description">Description</label>
+              <textarea
+                class="form-control form-control-sm"
+                id="description"
+                name="description"
+                placeholder="Description"
+                rows="9"
+              ></textarea>
+            </div>
+
+            <div class="form-group col-sm-6">
+              <label for="tags">Reference Tags :</label>
+              <textarea
+                class="form-control form-control-sm"
+                id="tags"
+                name="tags"
+                placeholder="Tags"
+                rows="9"
+              ></textarea>
+            </div>
+
+            <div class="col-md-12">
+              <label for="category">Category</label>
+              <% const get_category_tree = (hierarchy) => { let list = ""; if
+              (hierarchy) { hierarchy.map(function (ch) {
+              if(ch.category_hierarchy.length > 0){ %> <br />
+              <% } %>
+              <label
+                for="<%= ch.category_slug %>"
+                title="<%= ch.category_slug %>"
+              >
+                <%= ch.category_name %>
+                <input
+                  type="checkbox"
+                  id="<%= ch.category_slug %>"
+                  name="categorys_array"
+                  value="<%= ch.category_id %>"
+                />
+                <% if(ch.category_hierarchy.length > 0){ %> => <% } %> </label
+              >&nbsp;&nbsp;&nbsp; <% if (ch.category_hierarchy.length > 0) {
+              get_category_tree(ch.category_hierarchy); } }); } %><br /><% }
+              get_category_tree(categoryHieratchy); %>
+            </div>
+            <div class="col-md-12">&nbsp;</div>
+            <div class="col-md-12">
+              <table class="table table-bordered table-sm"  style="font-size:12px;" id="product_table">
+                <thead style='background-color:#efefef;'>
+                    <% let  attribute_ids = []; attributeList.map((item,index)=>{
+                      attribute_ids.push(item.attribute_id) %>   
+                    <th width="9%" ><%= item.attribute_name %></th>
+                    <% }); %>
+                    <input type="hidden" id="attribute_ids" name="attribute_ids" value="<%= attribute_ids %> ">
+                    <th width="6%">Product Code</th>
+                    <th width="6%">SKU</th>
+                    <th width="5%">M.R.P.</th>
+                    <th width="5%">Offered Price</th>
+                    <th width="5%">GST</th>
+                    <th width="2%">Add</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <% attributeList.map((item,index)=>{  %>
+                      <td>
+                        <select id="attribute_id_<%= item.attribute_id %>" class="form-control form-control-sm" > 
+                          <option value="0">Select</option>
+                          <% JSON.parse(item.attribute_values).map((i)=>{  %>
+                          <option value="<%= i.attribute_value_id %>"> <%= i.attribute_value_description %> </option>
+                          <% }); %>
+                        </select>
+                      </td>
+                    <% }); %>
+                    <td>
+                      <input type="text" class="form-control form-control-sm" id="product_code" />
+                    </td>
+                    <td>
+                      <input type="text" class="form-control form-control-sm" id="product_sku" />
+                    </td>
+                    <td>
+                      <input type="text" class="form-control form-control-sm" id="product_mrp" />
+                    </td>
+                    <td>
+                      <input type="number" class="form-control form-control-sm" id="product_msp" />
+                    </td>
+                    <td>
+                      <select id="product_gst" class="form-control form-control-sm" > 
+                        <option value="0">0.00</option>
+                        <% gstList.map((i)=>{  %>
+                        <option value="<%= i.gst_id %>"> <%= i.gst_percentage %> </option>
+                        <% }); %>
+                      </select>
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-xs btn-info " onclick="add(this);" >
+                        <i class="fa fa-plus-circle fa-fw"></i>Add
+                      </button>
+                    </td>
+
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="col-sm-12">&nbsp;</div>
+            <div class="col-sm-12" id="error-message">&nbsp;</div>
+            <div class="col-sm-12">&nbsp;</div>
+            <div class="form-group col-sm-12">
+              <center>
+                <button type="submit" id="submit" class="btn btn-primary me-2">Save</button>
+              </center>
+            </div>
+          </form>
+          <!-- From -->
+        </div>
+      </div>
+    </div>
+    <!--/. container-fluid -->
+  </section>
+  <!-- /.content -->
+</div>
+
+<!-- /.content-wrapper -->
+<script src="../public/views-js/product.js"></script>
+<%- include("partials/footer"); -%>

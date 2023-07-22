@@ -1,0 +1,29 @@
+
+.actions {
+  @apply flex p-2 border border-gray-300  items-center justify-center
+  w-12 text-slate-950;
+  transition-property: border-color, background, color, transform, box-shadow;
+
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+  user-select: none;
+}
+
+.actions:hover {
+  @apply border bg-gray-200 border-slate-950 text-slate-950;
+  transition: border-color;
+  z-index: 10;
+}
+
+.actions:focus {
+  @apply outline-none;
+}
+
+.actions:disabled {
+  @apply cursor-not-allowed;
+}
+
+.input {
+  @apply bg-transparent px-2 w-full h-full focus:outline-none text-center text-slate-950 font-medium select-none pointer-events-auto;
+}
+  

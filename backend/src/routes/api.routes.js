@@ -8,7 +8,9 @@ const attributeValueRoutes = require("./attributeValue.routes");
 const productRoutes = require("./product.routes");
 const wishlistRouter = require("./wishlist.routes");
 const cartRouter = require("./cart.routes");
+const orderRoutes = require("./order.routes");
 
+router.use("/order", orderRoutes);
 router.use("/user", userRoutes);
 router.use("/wishlist", wishlistRouter);
 router.use("/cart", cartRouter);

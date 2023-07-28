@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes, Sequelize) => {
       },
       product_title: { type: DataTypes.STRING },
       product_sub_title: { type: DataTypes.STRING },
-      product_description: { type: DataTypes.STRING },
+      product_description: { type: DataTypes.TEXT },
       product_slug: { type: DataTypes.STRING },
       product_code: { type: DataTypes.STRING },
       product_sku: { type: DataTypes.STRING },

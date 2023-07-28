@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const formControl = `bg-primary py-2 px-6 w-full appearance-none transition slate-900 duration-150 ease-in-out pr-10 border  border-slate-400 focus:border-slate-900 text-slate-700 focus:outline-none focus:shadow-outline-normal focus:ring-2 focus:ring-slate-200`;
 
@@ -7,9 +7,13 @@ const formControlInvalid = `bg-primary py-2 px-6 w-full appearance-none transiti
 const Input = (props) => {
   return (
     <>
-      <label>
+      <label for={props.id}>
         <input
-          className={props.inputHasError ? formControlInvalid : formControl}
+          id={props.id}
+          name={props.name}
+          className={`${
+            props.inputHasError ? formControlInvalid : formControl
+          }  ${props.className ? props.className : ""} `}
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"

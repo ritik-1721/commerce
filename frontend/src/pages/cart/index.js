@@ -1,10 +1,11 @@
 // import WishList from "@/components/wishlist/WishList";
 import CartItem from "@/components/cart/CartItem";
+import Link from "next/link";
 import Wrapper from "@/components/ui/Wrapper";
 import { NextSeo } from "next-seo";
 import { useSelector } from "react-redux";
+import { BASE_URL } from "@/utils/constants";
 import Button from "@/components/ui/Button/Button";
-import CheckoutItem from "@/components/cart/CheckoutItem";
 
 export default function Page() {
   const cartItems = useSelector((state) => state.cart.items);
@@ -102,7 +103,9 @@ export default function Page() {
 
                   {/* BUTTON START */}
                   <div className="pt-2 w-full  flex-col">
-                    <Button variant="slim">GO TO CHECKOUT</Button>
+                    <Link href={`${BASE_URL}checkout`}>
+                      <Button variant="slim">GO TO CHECKOUT</Button>
+                    </Link>
                   </div>
                   {/* BUTTON END */}
                 </div>

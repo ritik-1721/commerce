@@ -1,6 +1,10 @@
 const emailRegex =
   /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
+export const noValidate = (value) => {
+  return true;
+};
+
 export const isNotEmpty = (value) => {
   if (!value) {
     return false;

@@ -9,8 +9,8 @@ module.exports = (sequelize, DataTypes, Sequelize) => {
         allowNull: false,
       },
       order_id: { type: DataTypes.INTEGER, allowNull: false },
-      old_status: { type: DataTypes.INTEGER, allowNull: false },
-      new_status: { type: DataTypes.INTEGER, allowNull: false },
+      status_id: { type: DataTypes.INTEGER, allowNull: false },
+      // new_status: { type: DataTypes.INTEGER, allowNull: false },
       log_date: {
         type: DataTypes.DATE,
         allowNull: false,

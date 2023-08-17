@@ -1,59 +1,66 @@
 const {
+  razorpayInstance,
+  razorpayVerifySignature,
+} = require("../helpers/razorpay.helpers");
+const {
   CreateOrder,
+  UpdateOrderById,
   BulkCreateOrderItem,
+  QueryOrderByID,
   AddInitialStatusData,
+  CreateOrderStatusLog,
 } = require("../service/order.services");
-const { QueryCartByUserId } = require("../service/cart.services");
+const {
+  QueryCartByUserId,
+  UpdateCartByUserId,
+} = require("../service/cart.services");
 const { getCurrentDateTime } = require("../helpers/local.helpers");
 const { CreateAddress } = require("../service/address.services");
 
 // Define constants for address properties
 const SHIPPING_ADDRESS_FIELDS = [
-  "shipping_fname",
-  "shipping_lname",
-  "shipping_email",
-  "shipping_receiver_mobile",
-  "shipping_alternative_mobile",
-  "shipping_apartment_suite_unit",
-  "shipping_street_address",
-  "shipping_city",
-  "shipping_state",
-  "shipping_pin_code",
-  "shipping_country",
+  "shipping_address_fname",
+  "shipping_address_lname",
+  "shipping_address_email",
+  "shipping_address_receiver_mobile",
+  "shipping_address_alternative_mobile",
+  "shipping_address_apartment_suite_unit",
+  "shipping_address_street_address",
+  "shipping_address_city",
+  "shipping_address_state",
+  "shipping_address_pincode",
+  "shipping_address_country",
 ];
-
 const BILLING_ADDRESS_FIELDS = [
-  "billing_fname",
-  "billing_lname",
-  "billing_email",
-  "billing_receiver_mobile",
-  "billing_alternative_mobile",
-  "billing_apartment_suite_unit",
-  "billing_street_address",
-  "billing_city",
-  "billing_state",
-  "billing_pin_code",
-  "billing_country",
+  "billing_address_fname",
+  "billing_address_lname",
+  "billing_address_email",
+  "billing_address_receiver_mobile",
+  "billing_address_alternative_mobile",
+  "billing_address_apartment_suite_unit",
+  "billing_address_street_address",
+  "billing_address_city",
+  "billing_address_state",
+  "billing_address_pincode",
+  "billing_address_country",
 ];
-
 // Constants for success messages
 const SUCCESS_MESSAGES = {
   ORDER_CREATED: "Order created successfully.", // Success message for order creation
 };
-
 // Constants for error messages
 const ERROR_MESSAGES = {
   MISSING_ADDRESSES: "Shipping and Billing addresses are required.",
   SOMETHING_WENT_WRONG: "Something went wrong.",
   CART_EMPTY: "Cart Empty.",
 };
-
 // Helper function to map address properties and create the address data object
 const mapAddressData = (data, fields, user_id, currentDateTime) => {
   const addressData = {};
   fields.forEach((field) => {
-    addressData[field.replace("shipping_", "").replace("billing_", "")] =
-      data[field];
+    addressData[
+      field.replace("shipping_address_", "").replace("billing_address_", "")
+    ] = data[field];
   });
   addressData.user_id = user_id;
   addressData.createdBy = user_id;
@@ -61,19 +68,102 @@ const mapAddressData = (data, fields, user_id, currentDateTime) => {
   return addressData;
 };
 
-const createOrder = async (req, res) => {
+const verifyOrder = async (req, res) => {
   try {
     const currentDateTime = getCurrentDateTime();
     const { user_id } = req.tokenData;
+    const { razorpayPaymentId, razorpayOrderId, razorpaySignature } = req.body;
+    const data = `${razorpayOrderId}|${razorpayPaymentId}`;
+    const isSignatureValid = razorpayVerifySignature(data, razorpaySignature);
+    if (!isSignatureValid) {
+      return res.status(400).json({ ok: false, message: "Payment Failed" });
+    }
 
+    const payment = await razorpayInstance.payments.fetch(razorpayPaymentId);
+    const orderDetails = await QueryOrderByID(payment.notes.order_id);
+
+    const isValidOrder =
+      orderDetails &&
+      orderDetails.razorpay_order_id === razorpayOrderId &&
+      orderDetails.order_status === 1 &&
+      orderDetails.payment_status === 1;
+    if (!isValidOrder) {
+      return res
+        .status(400)
+        .json({ ok: false, message: "Something went wrong." });
+    }
+    if (payment.order_id !== razorpayOrderId || payment.status !== "captured") {
+      const updatePayload = {
+        payment_status: 3,
+        payment_response: payment,
+        order_status: 13,
+        updatedBy: user_id,
+        updatedAt: currentDateTime,
+      };
+
+      await Promise.all([
+        UpdateOrderById(orderDetails.order_id, updatePayload),
+        CreateOrderStatusLog({
+          order_id: orderDetails.order_id,
+          log_date: currentDateTime,
+          status_id: 13,
+          createdBy: user_id,
+          createdAt: currentDateTime,
+        }),
+      ]);
+      return res
+        .status(400)
+        .json({ ok: false, message: "Payment failed or order ID mismatch!" });
+    }
+
+    const successUpdatePayload = {
+      payment_status: 2,
+      payment_response: payment,
+      order_status: 4,
+      updatedBy: user_id,
+      updatedAt: currentDateTime,
+    };
+
+    await Promise.all([
+      UpdateOrderById(orderDetails.order_id, successUpdatePayload),
+      CreateOrderStatusLog({
+        order_id: orderDetails.order_id,
+        log_date: currentDateTime,
+        status_id: 4,
+        createdBy: user_id,
+        createdAt: currentDateTime,
+      }),
+      UpdateCartByUserId(user_id, {
+        isDelete: true,
+        createdBy: user_id,
+        createdAt: currentDateTime,
+      }),
+    ]);
+
+    return res.status(200).json({ ok: true, message: "Payment successful!" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      ok: false,
+      message: "Something went wrong.",
+    });
+  }
+};
+
+const createOrder = async (req, res) => {
+  try {
+    const currentDateTime = getCurrentDateTime();
+    const { user_id, fname, lname } = req.tokenData;
+    const sameAsBilling = req.body["same-as-billing"];
     const isValidShippingAddress = SHIPPING_ADDRESS_FIELDS.every(
       (field) => req.body[field] !== undefined
     );
-    const isValidBillingAddress = BILLING_ADDRESS_FIELDS.every(
-      (field) => req.body[field] !== undefined
-    );
 
-    if (!isValidShippingAddress || !isValidBillingAddress) {
+    if (
+      !isValidShippingAddress ||
+      (!sameAsBilling &&
+        !BILLING_ADDRESS_FIELDS.every((field) => req.body[field] !== undefined))
+    ) {
       return res
         .status(400)
         .json({ ok: false, message: ERROR_MESSAGES.MISSING_ADDRESSES });
@@ -85,19 +175,26 @@ const createOrder = async (req, res) => {
       user_id,
       currentDateTime
     );
-    const billingAddressData = mapAddressData(
-      req.body,
-      BILLING_ADDRESS_FIELDS,
-      user_id,
-      currentDateTime
-    );
-    console.log(shippingAddressData);
 
-    console.log(billingAddressData);
-    const [shippingAddressId, billingAddressId] = await Promise.all([
-      CreateAddress({ ...shippingAddressData, address_type: "shipping" }),
-      CreateAddress({ ...billingAddressData, address_type: "billing" }),
-    ]);
+    const shippingAddressId = await CreateAddress({
+      ...shippingAddressData,
+      address_type: "shipping",
+    });
+    let billingAddressId;
+    if (Boolean(sameAsBilling)) {
+      billingAddressId = shippingAddressId;
+    } else {
+      const billingAddressData = mapAddressData(
+        req.body,
+        BILLING_ADDRESS_FIELDS,
+        user_id,
+        currentDateTime
+      );
+      billingAddressId = await CreateAddress({
+        ...billingAddressData,
+        address_type: "billing",
+      });
+    }
 
     const cartItems = await QueryCartByUserId(user_id);
     if (!cartItems || cartItems.length === 0) {
@@ -131,6 +228,15 @@ const createOrder = async (req, res) => {
       cartItems,
       user_id
     );
+
+    await CreateOrderStatusLog({
+      order_id: newOrder.order_id,
+      log_date: currentDateTime,
+      status_id: 1,
+      createdBy: user_id,
+      createdAt: currentDateTime,
+    });
+
     const newOrderItem = await BulkCreateOrderItem(orderItemsInfo);
     if (!newOrderItem) {
       return res
@@ -138,10 +244,31 @@ const createOrder = async (req, res) => {
         .json({ ok: false, message: ERROR_MESSAGES.SOMETHING_WENT_WRONG });
     }
 
+    const options = {
+      amount: Number(newOrder.order_amount) * 100, // amount == Rs 10
+      currency: "INR",
+      receipt: `receipt#${newOrder.order_id}`,
+      payment_capture: 1,
+      // 1 for automatic capture // 0 for manual capture
+      notes: {
+        customer_name: `${fname} ${lname}`,
+        order_type: "Product Purchase",
+        order_id: newOrder.order_id,
+      },
+    };
+    const order = await razorpayInstance.orders.create(options);
+
+    await UpdateOrderById(newOrder.order_id, {
+      payment_gateway: "Razorpay",
+      razorpay_order_id: order.id,
+      payment_status: 1,
+      payment_request: order,
+    });
+
     return res.status(201).json({
       ok: true,
       message: SUCCESS_MESSAGES.ORDER_CREATED,
-      data: newOrder,
+      order: order,
     });
   } catch (error) {
     console.error("Error:", error);
@@ -187,4 +314,5 @@ const addInitialData = async (req, res) => {
 module.exports = {
   createOrder,
   addInitialData,
+  verifyOrder,
 };

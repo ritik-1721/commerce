@@ -2,6 +2,9 @@ const dbConfig = require("../config/dbConfig.js");
 // const defineAssociations = require("./associations");
 const { Sequelize, DataTypes, QueryTypes } = require("sequelize");
 
+// const sequelize = new Sequelize("postgres://ritik-1721:MyQDFR8Vs5Tp@ep-curly-art-82536247.us-east-2.aws.neon.tech/Commerce?sslmode=require"); //ONLINE
+
+
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   dialect: dbConfig.dialect,
@@ -14,6 +17,8 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     idle: dbConfig.pool.idle,
   },
 });
+
+
 sequelize
   .authenticate()
   .then(() => {
@@ -56,8 +61,8 @@ db.sequelize.sync({ force: false }).then(() => { console.log("yes re-sync done!"
  db.orderItemMaster.belongsTo(db.orderMaster,{ foreignKey: "order_id", indexes: [{ fields: ["order_id"] }], });
  db.orderItemMaster.belongsTo(db.productMaster,{ foreignKey: "product_id", indexes: [{ fields: ["product_id"] }], });
  // associations orderStatusLog
- db.orderStatusLog.belongsTo(db.orderStatus, { foreignKey: "old_status" });
- db.orderStatusLog.belongsTo(db.orderStatus, { foreignKey: "new_status" });
+//  db.orderStatusLog.belongsTo(db.orderStatus, { foreignKey: "old_status" });
+ db.orderStatusLog.belongsTo(db.orderStatus, { foreignKey: "status_id" });
  db.orderStatusLog.belongsTo(db.orderMaster, { foreignKey: "order_id", indexes: [{ fields: ["order_id"] }], });
  // associations orderMaster
  db.orderMaster.belongsTo(db.addressMaster, { foreignKey: "shipping_address_id", indexes: [{ fields:["shipping_address_id"] }], });
@@ -80,8 +85,8 @@ db.sequelize.sync({ force: false }).then(() => { console.log("yes re-sync done!"
  db.cartMaster.belongsTo(db.productMaster, { foreignKey: "product_id", indexes: [{ fields: ["product_id"] }], });
  db.cartMaster.belongsTo(db.userMaster, { foreignKey: "user_id", indexes: [{ fields: ["user_id"] }], });
  // associations categoryMaster
- db.categoryMaster.belongsTo(db.categoryMaster, { foreignKey: "parent_id", indexes: [{ fields: ["parent_id"] }], });
- db.categoryMaster.hasMany(db.categoryMaster, { foreignKey: "parent_id", indexes: [{ fields: ["parent_id"] }], });
+//  db.categoryMaster.belongsTo(db.categoryMaster, { foreignKey: "parent_id", indexes: [{ fields: ["parent_id"] }], });
+//  db.categoryMaster.hasMany(db.categoryMaster, { foreignKey: "parent_id", indexes: [{ fields: ["parent_id"] }], });
  // associations productAttributeValues
  db.productAttributeValues.belongsTo(db.productMaster, { foreignKey: "product_id", indexes: [{ fields: ["product_id"] }], });
  db.productAttributeValues.belongsTo(db.attributeMaster, { foreignKey: "attribute_id", indexes: [{ fields: ["attribute_id"] }], });

@@ -1,9 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = { 
-  items: [], 
-  totalItems: 0, 
-  totalAmount: 0, 
+const initialState = {
+  items: [],
+  totalItems: 0,
+  totalAmount: 0,
 };
 
 const cartSlice = createSlice({
@@ -18,7 +18,9 @@ const cartSlice = createSlice({
     },
     addItemToCart(state, action) {
       const { product_id, product_msp } = action.payload;
-      const itemInd = state.items.findIndex( (item) => item.product_id === product_id );
+      const itemInd = state.items.findIndex(
+        (item) => item.product_id === product_id
+      );
       if (itemInd === -1) {
         state.items.push(action.payload);
         state.totalItems += 1;
@@ -29,10 +31,14 @@ const cartSlice = createSlice({
     },
     removeItemFromCart(state, action) {
       const { product_id, product_msp } = action.payload;
-      const itemInd = state.items.findIndex((item) => item.product_id === product_id );
+      const itemInd = state.items.findIndex(
+        (item) => item.product_id === product_id
+      );
       if (itemInd >= 0) {
         if (state.items[itemInd].quantity === 1) {
-          state.items = state.items.filter( (item) => item.product_id !== product_id );
+          state.items = state.items.filter(
+            (item) => item.product_id !== product_id
+          );
           state.totalItems -= 1;
         } else {
           state.items[itemInd].quantity -= 1;
@@ -40,15 +46,20 @@ const cartSlice = createSlice({
         state.totalAmount -= Math.round(product_msp * 100) / 100;
       }
     },
-    deteleItemFromCart(state, action){
+    deteleItemFromCart(state, action) {
       const { product_id, product_msp } = action.payload;
-      const itemInd = state.items.findIndex((item) => item.product_id === product_id );
+      const itemInd = state.items.findIndex(
+        (item) => item.product_id === product_id
+      );
       if (itemInd >= 0) {
         state.totalItems -= 1;
-        state.totalAmount -= Math.round(product_msp * 100) / 100 * state.items[itemInd].quantity;
-        state.items = state.items.filter( (item) => item.product_id !== product_id );
+        state.totalAmount -=
+          (Math.round(product_msp * 100) / 100) * state.items[itemInd].quantity;
+        state.items = state.items.filter(
+          (item) => item.product_id !== product_id
+        );
       }
-    }
+    },
   },
 });
 

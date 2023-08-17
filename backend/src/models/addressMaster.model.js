@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes, Sequelize) => {
       street_address: { type: DataTypes.STRING, allowNull: false },
       city: { type: DataTypes.STRING, allowNull: false },
       state: { type: DataTypes.STRING, allowNull: false },
-      pin_code: { type: DataTypes.STRING, allowNull: false },
+      pincode: { type: DataTypes.STRING, allowNull: false },
       country: { type: DataTypes.STRING, allowNull: false },
       address_type: {
         type: DataTypes.ENUM("shipping", "billing"),

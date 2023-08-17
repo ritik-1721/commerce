@@ -3,13 +3,58 @@ const db = require("../models/index");
 // 👇️ Models Use
 const OrderMaster = db.orderMaster;
 const OrderItemMaster = db.orderItemMaster;
-
 const OrderStatus = db.orderStatus;
+const OrderStatusLog = db.orderStatusLog;
+
+const UpdateOrderById = async (order_id, info) => {
+  try {
+    const result = await OrderMaster.update(
+      { ...info },
+      {
+        where: {
+          order_id: Number(order_id),
+          isDelete: false,
+        },
+      }
+    );
+    return result[0] > 0 ? true : false;
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
+};
 
 const CreateOrder = async (info) => {
   try {
     const newOrder = await OrderMaster.create(info);
     return newOrder instanceof OrderMaster ? newOrder.toJSON() : false;
+  } catch (error) {
+    console.error("Error:", error);
+    return false;
+  }
+};
+
+const QueryOrderByID = async (id) => {
+  try {
+    const result = await OrderMaster.findOne({
+      where: {
+        order_id: Number(id),
+        isDelete: false,
+      },
+    });
+    return result === null ? false : result.toJSON();
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
+
+const CreateOrderStatusLog = async (info) => {
+  try {
+    const newOrderStatusLog = await OrderStatusLog.create(info);
+    return newOrderStatusLog instanceof OrderStatusLog
+      ? newOrderStatusLog.toJSON()
+      : false;
   } catch (error) {
     console.error("Error:", error);
     return false;
@@ -73,4 +118,7 @@ module.exports = {
   CreateOrderItem,
   BulkCreateOrderItem,
   AddInitialStatusData,
+  UpdateOrderById,
+  QueryOrderByID,
+  CreateOrderStatusLog,
 };

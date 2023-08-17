@@ -294,15 +294,23 @@ const mimes = {
   ],
 };
 
+/**
+ * Guess the file extension from a MIME type.
+ * @param {string} extension - The file extension (without dot).
+ * @returns {string|false} The corresponding MIME type or false if not found.
+ */
 const guessTypeFromExtension = async (extension) => {
-  //extension is str ;
   const ext = extension.toString().toLowerCase().trim().replace(".", "");
   return ext in mimes ? mimes[ext] : false;
 };
 
+/**
+ * Guess the file extension based on a MIME type and a proposed extension.
+ * @param {string} type - The MIME type.
+ * @param {string} proposedExtension - The proposed file extension.
+ * @returns {string|null} The determined file extension or null if not found.
+ */
 const guessExtensionFromType = async (type, proposedExtension = "") => {
-  //type is str ;
-  //proposedExtension is str and pdf , jpg etc
   const extension = proposedExtension
     .toString()
     .toLowerCase()

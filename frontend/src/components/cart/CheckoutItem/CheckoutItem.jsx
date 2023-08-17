@@ -4,11 +4,9 @@ import Link from "next/link";
 const Option = ({ attributes }) => {
   return (
     <>
-      {" "}
       {attributes && attributes.length > 0 && (
         <div className="flex items-center pb-1">
           {attributes.map((item, i) => (
-            <>
             <div
               key={`${item.pa_id}-${item.attribute_name}`}
               className="text-xs font-semibold text-black/[0.5] inline-flex items-center justify-center"
@@ -23,15 +21,13 @@ const Option = ({ attributes }) => {
                 ></span>
               ) : (
                 <span className="mx-2 rounded-full bg-transparent border  h-5 p-1 text-accent-9 inline-flex items-center justify-center overflow-hidden">
-                {item.attribute_value_description}
-              </span>
+                  {item.attribute_value_description}
+                </span>
               )}
 
               {i < attributes.length - 1 ? <span>/</span> : ""}
               {i === attributes.length - 1 ? "" : <span className="mr-3" />}
             </div>
-            <br/>
-            </>
           ))}
         </div>
       )}
@@ -73,11 +69,9 @@ const CheckoutItem = ({ data }) => {
               {product_title}
             </span>
           </Link>
-
           {/* OPTION */}
           <Option attributes={attributes} />
           {/*  OPTION */}
-
           <div className="text-xs tracking-wider">{quantity}x</div>
         </div>
 

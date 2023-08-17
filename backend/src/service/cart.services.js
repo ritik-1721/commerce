@@ -81,7 +81,20 @@ const QueryCartByUserId = async (user_id) => {
   }
 };
 
+const UpdateCartByUserId = async (user_id, info) => {
+  try {
+    const result = await CartMaster.update(
+      { ...info },
+      { where: { user_id: Number(user_id), isDelete: false } }
+    );
+    return result[0] > 0 ? true : false;
+  } catch (err) {
+    return false;
+  }
+};
+
 module.exports = {
+  UpdateCartByUserId,
   UpdateCartById,
   CreateCart,
   QueryCartByUserId,

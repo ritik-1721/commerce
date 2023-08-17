@@ -3,9 +3,12 @@ import Wrapper from "@/components/ui/Wrapper";
 import { useSelector } from "react-redux";
 import CheckoutItem from "@/components/cart/CheckoutItem";
 import LabelInput from "@/components/ui/LabelInput";
-
+import useInput from "@/hooks/use-input";
+import { isEmail, isNotEmpty, noValidate } from "@/hooks/use-validate";
 import Button from "@/components/ui/Button/Button";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { CreateOrderApi, VerifyOrderApi } from "@/utils/service";
+import useRazorpay from "react-razorpay";
 
 function SameAsBillingCheckbox({ sameAsBilling, onClick }) {
   return (
@@ -30,13 +33,461 @@ function SameAsBillingCheckbox({ sameAsBilling, onClick }) {
   );
 }
 export default function Page() {
+  const Razorpay = useRazorpay();
+  const userDetails = useSelector((state) => state.auth.userDetails);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [formIsValid, setFormIsValid] = useState(false);
   const [sameAsBilling, setSameAsBilling] = useState(false);
+
+  const axios = { post: function post() {} };
+  function createVerify(data) {
+    return axios.post(`http://localhost:5000/api/verify`, data);
+  }
+
+  function getPaymentDetails(data) {
+    return axios.post(`http://localhost:5000/api/payDetails`, data);
+  }
+  const shippingAddressEmailInputRef = useRef(null);
+  const shippingAddressFirstNameInputRef = useRef(null);
+  const shippingAddressLastNameInputRef = useRef(null);
+  const shippingAddressApartmentSuiteUnitInputRef = useRef(null);
+  const shippingAddressStreetAddressInputRef = useRef(null);
+  const shippingAddressPincodeInputRef = useRef(null);
+  const shippingAddressReceiverMobileInputRef = useRef(null);
+  const shippingAddressAlternativeMobileInputRef = useRef(null);
+  const shippingAddressStateInputRef = useRef(null);
+  const shippingAddressCountryInputRef = useRef(null);
+  const shippingAddressCityInputRef = useRef(null);
+  const billingAddressFirstNameInputRef = useRef(null);
+  const billingAddressLastNameInputRef = useRef(null);
+  const billingAddressApartmentSuiteUnitInputRef = useRef(null);
+  const billingAddressStreetAddressInputRef = useRef(null);
+  const billingAddressPincodeInputRef = useRef(null);
+  const billingAddressReceiverMobileInputRef = useRef(null);
+  const billingAddressAlternativeMobileInputRef = useRef(null);
+  const billingAddressStateInputRef = useRef(null);
+  const billingAddressCountryInputRef = useRef(null);
+  const billingAddressCityInputRef = useRef(null);
+
   const cartItems = useSelector((state) => state.cart.items);
   const cartTotalItems = useSelector((state) => state.cart.totalItems);
   const cartTotalAmount = useSelector((state) => state.cart.totalAmount);
+
+  const {
+    value: enteredShippingAddressEmail,
+    isValid: enteredShippingAddressEmailIsValid,
+    hasError: shippingAddressEmailInputHasError,
+    valueChangeHandler: shippingAddressEmailChangedHandler,
+    inputBlurHandler: shippingAddressEmailBlurHandler,
+    reset: resetShippingAddressEmailInput,
+  } = useInput(isEmail);
+  const {
+    value: enteredShippingAddressFirstName,
+    isValid: enteredShippingAddressFirstNameIsValid,
+    hasError: shippingAddressFirstNameInputHasError,
+    valueChangeHandler: shippingAddressFirstNameChangedHandler,
+    inputBlurHandler: shippingAddressFirstNameBlurHandler,
+    reset: resetShippingAddressFirstNameInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredShippingAddressLastName,
+    isValid: enteredShippingAddressLastNameIsValid,
+    hasError: shippingAddressLastNameInputHasError,
+    valueChangeHandler: shippingAddressLastNameChangedHandler,
+    inputBlurHandler: shippingAddressLastNameBlurHandler,
+    reset: resetShippingAddressLastNameInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredShippingAddressApartmentSuiteUnit,
+    isValid: enteredShippingAddressApartmentSuiteUnitIsValid,
+    hasError: shippingAddressApartmentSuiteUnitInputHasError,
+    valueChangeHandler: shippingAddressApartmentSuiteUnitChangedHandler,
+    inputBlurHandler: shippingAddressApartmentSuiteUnitBlurHandler,
+    reset: resetShippingAddressApartmentSuiteUnitInput,
+  } = useInput(noValidate);
+  const {
+    value: enteredShippingAddressStreetAddress,
+    isValid: enteredShippingAddressStreetAddressIsValid,
+    hasError: shippingAddressStreetAddressInputHasError,
+    valueChangeHandler: shippingAddressStreetAddressChangedHandler,
+    inputBlurHandler: shippingAddressStreetAddressBlurHandler,
+    reset: resetShippingAddressStreetAddressInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredShippingAddressPincode,
+    isValid: enteredShippingAddressPincodeIsValid,
+    hasError: shippingAddressPincodeInputHasError,
+    valueChangeHandler: shippingAddressPincodeChangedHandler,
+    inputBlurHandler: shippingAddressPincodeBlurHandler,
+    reset: resetShippingAddressPincodeInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredShippingAddressCity,
+    isValid: enteredShippingAddressCityIsValid,
+    hasError: shippingAddressCityInputHasError,
+    valueChangeHandler: shippingAddressCityChangedHandler,
+    inputBlurHandler: shippingAddressCityBlurHandler,
+    reset: resetShippingAddressCityInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredShippingAddressState,
+    isValid: enteredShippingAddressStateIsValid,
+    hasError: shippingAddressStateInputHasError,
+    valueChangeHandler: shippingAddressStateChangedHandler,
+    inputBlurHandler: shippingAddressStateBlurHandler,
+    reset: resetShippingAddressStateInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredShippingAddressCountry,
+    isValid: enteredShippingAddressCountryIsValid,
+    hasError: shippingAddressCountryInputHasError,
+    valueChangeHandler: shippingAddressCountryChangedHandler,
+    inputBlurHandler: shippingAddressCountryBlurHandler,
+    reset: resetShippingAddressCountryInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredShippingAddressReceiverMobile,
+    isValid: enteredShippingAddressReceiverMobileIsValid,
+    hasError: shippingAddressReceiverMobileInputHasError,
+    valueChangeHandler: shippingAddressReceiverMobileChangedHandler,
+    inputBlurHandler: shippingAddressReceiverMobileBlurHandler,
+    reset: resetShippingAddressReceiverMobileInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredShippingAddressAlternativeMobile,
+    isValid: enteredShippingAddressAlternativeMobileIsValid,
+    hasError: shippingAddressAlternativeMobileInputHasError,
+    valueChangeHandler: shippingAddressAlternativeMobileChangedHandler,
+    inputBlurHandler: shippingAddressAlternativeMobileBlurHandler,
+    reset: resetShippingAddressAlternativeMobileInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredBillingAddressFirstName,
+    isValid: enteredBillingAddressFirstNameIsValid,
+    hasError: billingAddressFirstNameInputHasError,
+    valueChangeHandler: billingAddressFirstNameChangedHandler,
+    inputBlurHandler: billingAddressFirstNameBlurHandler,
+    reset: resetBillingAddressFirstNameInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredBillingAddressLastName,
+    isValid: enteredBillingAddressLastNameIsValid,
+    hasError: billingAddressLastNameInputHasError,
+    valueChangeHandler: billingAddressLastNameChangedHandler,
+    inputBlurHandler: billingAddressLastNameBlurHandler,
+    reset: resetBillingAddressLastNameInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredBillingAddressApartmentSuiteUnit,
+    isValid: enteredBillingAddressApartmentSuiteUnitIsValid,
+    hasError: billingAddressApartmentSuiteUnitInputHasError,
+    valueChangeHandler: billingAddressApartmentSuiteUnitChangedHandler,
+    inputBlurHandler: billingAddressApartmentSuiteUnitBlurHandler,
+    reset: resetBillingAddressApartmentSuiteUnitInput,
+  } = useInput(noValidate);
+  const {
+    value: enteredBillingAddressStreetAddress,
+    isValid: enteredBillingAddressStreetAddressIsValid,
+    hasError: billingAddressStreetAddressInputHasError,
+    valueChangeHandler: billingAddressStreetAddressChangedHandler,
+    inputBlurHandler: billingAddressStreetAddressBlurHandler,
+    reset: resetBillingAddressStreetAddressInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredBillingAddressPincode,
+    isValid: enteredBillingAddressPincodeIsValid,
+    hasError: billingAddressPincodeInputHasError,
+    valueChangeHandler: billingAddressPincodeChangedHandler,
+    inputBlurHandler: billingAddressPincodeBlurHandler,
+    reset: resetBillingAddressPincodeInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredBillingAddressCity,
+    isValid: enteredBillingAddressCityIsValid,
+    hasError: billingAddressCityInputHasError,
+    valueChangeHandler: billingAddressCityChangedHandler,
+    inputBlurHandler: billingAddressCityBlurHandler,
+    reset: resetBillingAddressCityInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredBillingAddressState,
+    isValid: enteredBillingAddressStateIsValid,
+    hasError: billingAddressStateInputHasError,
+    valueChangeHandler: billingAddressStateChangedHandler,
+    inputBlurHandler: billingAddressStateBlurHandler,
+    reset: resetBillingAddressStateInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredBillingAddressCountry,
+    isValid: enteredBillingAddressCountryIsValid,
+    hasError: billingAddressCountryInputHasError,
+    valueChangeHandler: billingAddressCountryChangedHandler,
+    inputBlurHandler: billingAddressCountryBlurHandler,
+    reset: resetBillingAddressCountryInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredBillingAddressReceiverMobile,
+    isValid: enteredBillingAddressReceiverMobileIsValid,
+    hasError: billingAddressReceiverMobileInputHasError,
+    valueChangeHandler: billingAddressReceiverMobileChangedHandler,
+    inputBlurHandler: billingAddressReceiverMobileBlurHandler,
+    reset: resetBillingAddressReceiverMobileInput,
+  } = useInput(isNotEmpty);
+  const {
+    value: enteredBillingAddressAlternativeMobile,
+    isValid: enteredBillingAddressAlternativeMobileIsValid,
+    hasError: billingAddressAlternativeMobileInputHasError,
+    valueChangeHandler: billingAddressAlternativeMobileChangedHandler,
+    inputBlurHandler: billingAddressAlternativeMobileBlurHandler,
+    reset: resetBillingAddressAlternativeMobileInput,
+  } = useInput(isNotEmpty);
+
   const sameAsBillingHandler = () => {
+    resetBillingAddressFirstNameInput();
+    resetBillingAddressLastNameInput();
+    resetBillingAddressApartmentSuiteUnitInput();
+    resetBillingAddressStreetAddressInput();
+    resetBillingAddressPincodeInput();
+    resetBillingAddressCityInput();
+    resetBillingAddressStateInput();
+    resetBillingAddressCountryInput();
+    resetBillingAddressReceiverMobileInput();
+    resetBillingAddressAlternativeMobileInput();
     setSameAsBilling(!sameAsBilling);
   };
+
+  useEffect(() => {
+    setFormIsValid(
+      enteredShippingAddressEmailIsValid &&
+        enteredShippingAddressFirstNameIsValid &&
+        enteredShippingAddressLastNameIsValid &&
+        enteredShippingAddressPincodeIsValid &&
+        enteredShippingAddressStreetAddressIsValid &&
+        enteredShippingAddressStateIsValid &&
+        enteredShippingAddressCityIsValid &&
+        enteredShippingAddressCountryIsValid &&
+        enteredShippingAddressReceiverMobileIsValid &&
+        enteredShippingAddressAlternativeMobileIsValid &&
+        (!sameAsBilling ||
+          (enteredBillingAddressFirstNameIsValid &&
+            enteredBillingAddressLastNameIsValid &&
+            enteredBillingAddressPincodeIsValid &&
+            enteredBillingAddressStreetAddressIsValid &&
+            enteredBillingAddressStateIsValid &&
+            enteredBillingAddressCityIsValid &&
+            enteredBillingAddressCountryIsValid &&
+            enteredBillingAddressReceiverMobileIsValid &&
+            enteredBillingAddressAlternativeMobileIsValid))
+    );
+  }, [
+    enteredShippingAddressEmailIsValid,
+    enteredShippingAddressFirstNameIsValid,
+    enteredShippingAddressLastNameIsValid,
+    enteredShippingAddressPincodeIsValid,
+    enteredShippingAddressStreetAddressIsValid,
+    enteredShippingAddressStateIsValid,
+    enteredShippingAddressCityIsValid,
+    enteredShippingAddressCountryIsValid,
+    enteredShippingAddressReceiverMobileIsValid,
+    enteredShippingAddressAlternativeMobileIsValid,
+    enteredBillingAddressFirstNameIsValid,
+    enteredBillingAddressLastNameIsValid,
+    enteredBillingAddressPincodeIsValid,
+    enteredBillingAddressStreetAddressIsValid,
+    enteredBillingAddressStateIsValid,
+    enteredBillingAddressCityIsValid,
+    enteredBillingAddressCountryIsValid,
+    enteredBillingAddressReceiverMobileIsValid,
+    enteredBillingAddressAlternativeMobileIsValid,
+    sameAsBilling,
+  ]);
+
+  const blurInputsHandler = useCallback(() => {
+    shippingAddressEmailBlurHandler();
+    shippingAddressFirstNameBlurHandler();
+    shippingAddressLastNameBlurHandler();
+    shippingAddressPincodeBlurHandler();
+    shippingAddressStreetAddressBlurHandler();
+    shippingAddressStateBlurHandler();
+    shippingAddressCityBlurHandler();
+    shippingAddressCountryBlurHandler();
+    shippingAddressReceiverMobileBlurHandler();
+    shippingAddressAlternativeMobileBlurHandler();
+    billingAddressFirstNameBlurHandler();
+    billingAddressLastNameBlurHandler();
+    billingAddressPincodeBlurHandler();
+    billingAddressStreetAddressBlurHandler();
+    billingAddressStateBlurHandler();
+    billingAddressCityBlurHandler();
+    billingAddressCountryBlurHandler();
+    billingAddressReceiverMobileBlurHandler();
+    billingAddressAlternativeMobileBlurHandler();
+  }, [
+    shippingAddressEmailBlurHandler,
+    shippingAddressFirstNameBlurHandler,
+    shippingAddressLastNameBlurHandler,
+    shippingAddressPincodeBlurHandler,
+    shippingAddressStreetAddressBlurHandler,
+    shippingAddressStateBlurHandler,
+    shippingAddressCityBlurHandler,
+    shippingAddressCountryBlurHandler,
+    shippingAddressReceiverMobileBlurHandler,
+    shippingAddressAlternativeMobileBlurHandler,
+    billingAddressFirstNameBlurHandler,
+    billingAddressLastNameBlurHandler,
+    billingAddressPincodeBlurHandler,
+    billingAddressStreetAddressBlurHandler,
+    billingAddressStateBlurHandler,
+    billingAddressCityBlurHandler,
+    billingAddressCountryBlurHandler,
+    billingAddressReceiverMobileBlurHandler,
+    billingAddressAlternativeMobileBlurHandler,
+  ]);
+
+  const displayRazorpay = useCallback(
+    (result) => {
+      try {
+        const options = {
+          key: "rzp_test_QwRkxxPsNKaaaQ", // Enter the Key ID generated from the Dashboard
+          amount: result.amount,
+          currency: result.currency,
+          name: "Soumya Corp.",
+          description: "Test Transaction",
+          image: { logo: "" },
+          order_id: result.id,
+          handler: async (response) => {
+            const formData = new FormData();
+            formData.set("razorpayPaymentId", response.razorpay_payment_id);
+            formData.set("razorpayOrderId", response.razorpay_order_id);
+            formData.set("razorpaySignature" , response.razorpay_signature );
+            const result = await VerifyOrderApi(formData);
+          },
+          prefill: {
+            name: userDetails.fname + " " + userDetails.lname,
+            email: userDetails.email,
+            contact: "",
+          },
+          notes: {
+            address: "Neosoft",
+          },
+          theme: {
+            color: "#3399cc",
+          },
+        };
+        const paymentObject = new window.Razorpay(options);
+        paymentObject.open();
+        setIsLoading(false);
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    [userDetails]
+  );
+
+  const formCheckoutHandler = useCallback(
+    async (event) => {
+      event.preventDefault();
+      event.persist();
+      setIsLoading(true);
+      if (!formIsValid) {
+        setErrorMessage(
+          "Cannot find an account that matches the provided credentials."
+        );
+        blurInputsHandler();
+        setIsLoading(false);
+        return false;
+      }
+
+      const formData = new FormData();
+      formData.set("shipping_address_email", enteredShippingAddressEmail);
+      formData.set("shipping_address_fname", enteredShippingAddressFirstName);
+      formData.set("shipping_address_lname", enteredShippingAddressLastName);
+      formData.set(
+        "shipping_address_receiver_mobile",
+        enteredShippingAddressReceiverMobile
+      );
+      formData.set(
+        "shipping_address_alternative_mobile",
+        enteredShippingAddressAlternativeMobile
+      );
+      formData.set(
+        "shipping_address_apartment_suite_unit",
+        enteredShippingAddressApartmentSuiteUnit
+      );
+      formData.set(
+        "shipping_address_street_address",
+        enteredShippingAddressStreetAddress
+      );
+      formData.set("shipping_address_city", enteredShippingAddressCity);
+      formData.set("shipping_address_state", enteredShippingAddressState);
+      formData.set("shipping_address_pincode", enteredShippingAddressPincode);
+      formData.set("shipping_address_country", enteredShippingAddressCountry);
+      formData.set("billing_address_fname", enteredBillingAddressFirstName);
+      formData.set("billing_address_lname", enteredBillingAddressLastName);
+      formData.set(
+        "billing_address_receiver_mobile",
+        enteredBillingAddressReceiverMobile
+      );
+      formData.set(
+        "billing_address_alternative_mobile",
+        enteredBillingAddressAlternativeMobile
+      );
+      formData.set(
+        "billing_address_apartment_suite_unit",
+        enteredBillingAddressApartmentSuiteUnit
+      );
+      formData.set(
+        "billing_address_street_address",
+        enteredBillingAddressStreetAddress
+      );
+      formData.set("billing_address_city", enteredBillingAddressCity);
+      formData.set("billing_address_state", enteredBillingAddressState);
+      formData.set("billing_address_pincode", enteredBillingAddressPincode);
+      formData.set("billing_address_country", enteredBillingAddressCountry);
+      formData.set("same-as-billing", sameAsBilling ? 1 : 0);
+
+      try {
+        const req = await CreateOrderApi(formData);
+        const data = await req.json();
+        if (data.ok === false) {
+          setErrorMessage(data.message);
+        } else {
+          setErrorMessage(data.message);
+          displayRazorpay(data.order);
+        }
+      } catch (error) {
+        alert(error.message);
+      }
+    },
+    [
+      formIsValid,
+      blurInputsHandler,
+      enteredShippingAddressEmail,
+      enteredShippingAddressFirstName,
+      enteredShippingAddressLastName,
+      enteredShippingAddressReceiverMobile,
+      enteredShippingAddressAlternativeMobile,
+      enteredShippingAddressApartmentSuiteUnit,
+      enteredShippingAddressStreetAddress,
+      enteredShippingAddressCity,
+      enteredShippingAddressState,
+      enteredShippingAddressPincode,
+      enteredShippingAddressCountry,
+      enteredBillingAddressFirstName,
+      enteredBillingAddressLastName,
+      enteredBillingAddressReceiverMobile,
+      enteredBillingAddressAlternativeMobile,
+      enteredBillingAddressApartmentSuiteUnit,
+      enteredBillingAddressStreetAddress,
+      enteredBillingAddressCity,
+      enteredBillingAddressState,
+      enteredBillingAddressPincode,
+      enteredBillingAddressCountry,
+      displayRazorpay,
+      sameAsBilling,
+    ]
+  );
   return (
     <>
       <Wrapper>
@@ -47,7 +498,6 @@ export default function Page() {
           </div>
         </div>
         {/* HEADING AND PARAGRAPH END */}
-
         {/* CART CONTENT START */}
         <div className="flex flex-col lg:flex-row gap-12 py-10">
           {/* CART ITEMS START */}
@@ -63,148 +513,196 @@ export default function Page() {
                 {/* <ShippingAddressForm /> */}
                 <div className="grid grid-cols-1 gap-y-2">
                   <LabelInput
-                    id="shipping_address.email"
-                    name="shipping_address.email"
+                    id="shipping_address_email"
+                    name="shipping_address_email"
                     type="email"
                     placeholder="Email"
-                    onChange={null}
-                    onBlur={null}
-                    value={""}
-                    inputHasError={false}
+                    autoComplete="email"
                     label={"Email address"}
                     required={true}
+                    onChange={shippingAddressEmailChangedHandler}
+                    onBlur={shippingAddressEmailBlurHandler}
+                    value={enteredShippingAddressEmail}
+                    inputHasError={shippingAddressEmailInputHasError}
+                    errorMessage={"Email is required."}
+                    innerRef={shippingAddressEmailInputRef}
                   />
                   <div className="grid grid-cols-2 gap-x-2">
                     <LabelInput
-                      id="shipping_address.first_name"
-                      name="shipping_address.first_name"
+                      id="shipping_address_fname"
+                      name="shipping_address_fname"
                       type="text"
                       placeholder="Enter first name."
-                      onChange={null}
-                      onBlur={null}
-                      value={""}
-                      autocomplete="first-name"
-                      inputHasError={null}
+                      onChange={shippingAddressFirstNameChangedHandler}
+                      onBlur={shippingAddressFirstNameBlurHandler}
+                      value={enteredShippingAddressFirstName}
+                      inputHasError={shippingAddressFirstNameInputHasError}
+                      autoComplete="first-name"
                       label={"First name"}
+                      required={true}
+                      errorMessage={"First name is required."}
+                      innerRef={shippingAddressFirstNameInputRef}
                     />
                     <LabelInput
-                      id="shipping_address.last_name"
-                      name="shipping_address.last_name"
+                      id="shipping_address_lname"
+                      name="shipping_address_lname"
                       type="text"
                       placeholder="Enter last name."
-                      onChange={null}
-                      onBlur={null}
-                      value={""}
-                      autocomplete="last-name"
-                      inputHasError={null}
+                      onChange={shippingAddressLastNameChangedHandler}
+                      onBlur={shippingAddressLastNameBlurHandler}
+                      value={enteredShippingAddressLastName}
+                      inputHasError={shippingAddressLastNameInputHasError}
+                      autoComplete="last-name"
                       label={"Last name"}
+                      required={true}
+                      errorMessage={"Last name is required."}
+                      innerRef={shippingAddressLastNameInputRef}
                     />
                   </div>
                   <LabelInput
-                    id="shipping_address.address_2"
-                    name="shipping_address.address_2"
+                    id="shipping_address_apartment_suite_unit"
+                    name="shipping_address_apartment_suite_unit"
                     type="text"
                     placeholder=" "
-                    onChange={null}
-                    onBlur={null}
-                    value={""}
-                    autocomplete="address-line2"
-                    inputHasError={null}
+                    onChange={shippingAddressApartmentSuiteUnitChangedHandler}
+                    onBlur={shippingAddressApartmentSuiteUnitBlurHandler}
+                    value={enteredShippingAddressApartmentSuiteUnit}
+                    inputHasError={
+                      shippingAddressApartmentSuiteUnitInputHasError
+                    }
+                    autoComplete="address-line2"
                     label={"Apartments, suite, etc."}
+                    innerRef={shippingAddressApartmentSuiteUnitInputRef}
                   />
                   <LabelInput
-                    id="shipping_address.address_1"
-                    name="shipping_address.address_1"
+                    id="shipping_address_street_address"
+                    name="shipping_address_street_address"
                     type="text"
                     placeholder="Enter address."
-                    onChange={null}
-                    onBlur={null}
-                    value={""}
-                    autocomplete="address-line1"
-                    inputHasError={null}
-                    label={"Address"}
+                    onChange={shippingAddressStreetAddressChangedHandler}
+                    onBlur={shippingAddressStreetAddressBlurHandler}
+                    value={enteredShippingAddressStreetAddress}
+                    inputHasError={shippingAddressStreetAddressInputHasError}
+                    autoComplete="address-line1"
+                    label={"Street address"}
+                    required={true}
+                    errorMessage={"Street address is required."}
+                    innerRef={shippingAddressStreetAddressInputRef}
                   />
 
                   <div className="grid grid-cols-[122px_1fr] gap-x-2">
                     <LabelInput
-                      id="shipping_address.postal_code"
-                      name="shipping_address.postal_code"
+                      id="shipping_address_pincode"
+                      name="shipping_address_pincode"
                       type="text"
                       placeholder=" "
-                      onChange={null}
-                      onBlur={null}
-                      value={""}
-                      autocomplete="postal-code"
-                      inputHasError={null}
-                      label={"Postal code"}
+                      onChange={shippingAddressPincodeChangedHandler}
+                      onBlur={shippingAddressPincodeBlurHandler}
+                      value={enteredShippingAddressPincode}
+                      inputHasError={shippingAddressPincodeInputHasError}
+                      autoComplete="pincode"
+                      label={"Pincode"}
+                      required={true}
+                      pattern="[0-9]*" // Only allow numbers (digits 0-9)
+                      errorMessage={"Pincode is required."}
+                      innerRef={shippingAddressPincodeInputRef}
                     />
-
                     <LabelInput
-                      id="shipping_address.city"
-                      name="shipping_address.city"
+                      id="shipping_address_city"
+                      name="shipping_address_city"
                       type="text"
                       placeholder=" "
-                      onChange={null}
-                      onBlur={null}
-                      value={""}
-                      autocomplete="address-level2"
-                      inputHasError={null}
+                      onChange={shippingAddressCityChangedHandler}
+                      onBlur={shippingAddressCityBlurHandler}
+                      value={enteredShippingAddressCity}
+                      inputHasError={
+                        shippingAddressCityInputHasError ||
+                        shippingAddressPincodeInputHasError
+                      }
+                      autoComplete="address-city"
                       label={"City"}
-                      readOnly={true}
+                      // readOnly={true}
+                      required={true}
+                      errorMessage={"City is required."}
+                      innerRef={shippingAddressCityInputRef}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-x-2">
                     <LabelInput
-                      id="shipping_address.city"
-                      name="shipping_address.city"
+                      id="shipping_address_state"
+                      name="shipping_address_state"
                       type="text"
                       placeholder=" "
-                      onChange={null}
-                      onBlur={null}
-                      value={""}
-                      autocomplete="address-level2"
-                      inputHasError={null}
+                      onChange={shippingAddressStateChangedHandler}
+                      onBlur={shippingAddressStateBlurHandler}
+                      value={enteredShippingAddressState}
+                      inputHasError={
+                        shippingAddressStateInputHasError ||
+                        shippingAddressPincodeInputHasError
+                      }
+                      autoComplete="address-state"
                       label={"State"}
-                      readOnly={true}
+                      // readOnly={true}
+                      required={true}
+                      errorMessage={"State is required."}
+                      innerRef={shippingAddressStateInputRef}
                     />
                     <LabelInput
-                      id="shipping_address.province"
-                      name="shipping_address.province"
+                      id="shipping_address_country"
+                      name="shipping_address_country"
                       type="text"
                       placeholder=" "
-                      onChange={null}
-                      onBlur={null}
-                      value={""}
-                      autocomplete="address-level1"
-                      inputHasError={null}
+                      onChange={shippingAddressCountryChangedHandler}
+                      onBlur={shippingAddressCountryBlurHandler}
+                      value={enteredShippingAddressCountry}
+                      inputHasError={
+                        shippingAddressCountryInputHasError ||
+                        shippingAddressPincodeInputHasError
+                      }
+                      autoComplete="address-country"
                       label={"Country"}
-                      readOnly={true}
+                      // readOnly={true}
+                      required={true}
+                      errorMessage={"Country is required."}
+                      innerRef={shippingAddressCountryInputRef}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-x-2">
                     <LabelInput
-                      id="shipping_address.phone"
-                      name="shipping_address.phone"
+                      id="shipping_address_receiver_mobile"
+                      name="shipping_address_receiver_mobile"
                       type="text"
                       placeholder=" "
-                      onChange={null}
-                      onBlur={null}
-                      value={""}
-                      autocomplete="tel"
-                      inputHasError={null}
-                      label={"Phone"}
+                      onChange={shippingAddressReceiverMobileChangedHandler}
+                      onBlur={shippingAddressReceiverMobileBlurHandler}
+                      value={enteredShippingAddressReceiverMobile}
+                      inputHasError={shippingAddressReceiverMobileInputHasError}
+                      autoComplete="tel"
+                      label={"Receiver Mobile"}
+                      required={true}
+                      pattern="[0-9]*" // Only allow numbers (digits 0-9)
+                      maxLength={10} // Optionally, you can set a maximum length for the input
+                      errorMessage={"Receiver mobile is required."}
+                      innerRef={shippingAddressReceiverMobileInputRef}
                     />
                     <LabelInput
-                      id="shipping_address.phone"
-                      name="shipping_address.phone"
+                      id="shipping_address_alternative_mobile"
+                      name="shipping_address_alternative_mobile"
                       type="text"
                       placeholder=" "
-                      onChange={null}
-                      onBlur={null}
-                      value={""}
-                      autocomplete="tel"
-                      inputHasError={null}
-                      label={"Phone"}
+                      onChange={shippingAddressAlternativeMobileChangedHandler}
+                      onBlur={shippingAddressAlternativeMobileBlurHandler}
+                      value={enteredShippingAddressAlternativeMobile}
+                      inputHasError={
+                        shippingAddressAlternativeMobileInputHasError
+                      }
+                      autoComplete="tel"
+                      label={"Alternative Mobile"}
+                      required={true}
+                      pattern="[0-9]*" // Only allow numbers (digits 0-9)
+                      maxLength={10} // Optionally, you can set a maximum length for the input
+                      errorMessage={"Alternative mobile is required."}
+                      innerRef={shippingAddressAlternativeMobileInputRef}
                     />
                   </div>
                 </div>
@@ -227,132 +725,189 @@ export default function Page() {
                   <div className="px-8 pb-8">
                     {/* <BillingAddressForm /> */}
                     <div className="grid grid-cols-1 gap-y-2">
-                      <LabelInput
-                        id="shipping_address.email"
-                        name="shipping_address.email"
-                        type="email"
-                        placeholder="Email"
-                        onChange={null}
-                        onBlur={null}
-                        value={""}
-                        inputHasError={null}
-                        label={"Email address"}
-                      />
                       <div className="grid grid-cols-2 gap-x-2">
                         <LabelInput
-                          id="shipping_address.first_name"
-                          name="shipping_address.first_name"
+                          id="billing_address_fname"
+                          name="billing_address_fname"
                           type="text"
                           placeholder="Enter first name."
-                          onChange={null}
-                          onBlur={null}
-                          value={""}
-                          autocomplete="first-name"
-                          inputHasError={null}
+                          onChange={billingAddressFirstNameChangedHandler}
+                          onBlur={billingAddressFirstNameBlurHandler}
+                          value={enteredBillingAddressFirstName}
+                          inputHasError={billingAddressFirstNameInputHasError}
+                          autoComplete="first-name"
                           label={"First name"}
+                          required={true}
+                          errorMessage={"First name is required."}
+                          innerRef={billingAddressFirstNameInputRef}
                         />
                         <LabelInput
-                          id="shipping_address.last_name"
-                          name="shipping_address.last_name"
+                          id="billing_address_lname"
+                          name="billing_address_lname"
                           type="text"
                           placeholder="Enter last name."
-                          onChange={null}
-                          onBlur={null}
-                          value={""}
-                          autocomplete="last-name"
-                          inputHasError={null}
+                          onChange={billingAddressLastNameChangedHandler}
+                          onBlur={billingAddressLastNameBlurHandler}
+                          value={enteredBillingAddressLastName}
+                          inputHasError={billingAddressLastNameInputHasError}
+                          autoComplete="last-name"
                           label={"Last name"}
+                          required={true}
+                          errorMessage={"Last name is required."}
+                          innerRef={billingAddressLastNameInputRef}
                         />
                       </div>
                       <LabelInput
-                        id="shipping_address.address_2"
-                        name="shipping_address.address_2"
+                        id="billing_address_apartment_suite_unit"
+                        name="billing_address_apartment_suite_unit"
                         type="text"
                         placeholder=" "
-                        onChange={null}
-                        onBlur={null}
-                        value={""}
-                        autocomplete="address-line2"
-                        inputHasError={null}
+                        onChange={
+                          billingAddressApartmentSuiteUnitChangedHandler
+                        }
+                        onBlur={billingAddressApartmentSuiteUnitBlurHandler}
+                        value={enteredBillingAddressApartmentSuiteUnit}
+                        inputHasError={
+                          billingAddressApartmentSuiteUnitInputHasError
+                        }
+                        autoComplete="address-line2"
                         label={"Apartments, suite, etc."}
+                        errorMessage={"Apartments, suite, etc. is required."}
+                        innerRef={billingAddressApartmentSuiteUnitInputRef}
                       />
                       <LabelInput
-                        id="shipping_address.address_1"
-                        name="shipping_address.address_1"
+                        id="billing_address_street_address"
+                        name="billing_address_street_address"
                         type="text"
                         placeholder="Enter address."
-                        onChange={null}
-                        onBlur={null}
-                        value={""}
-                        autocomplete="address-line1"
-                        inputHasError={null}
-                        label={"Address"}
+                        onChange={billingAddressStreetAddressChangedHandler}
+                        onBlur={billingAddressStreetAddressBlurHandler}
+                        value={enteredBillingAddressStreetAddress}
+                        inputHasError={billingAddressStreetAddressInputHasError}
+                        autoComplete="address-line1"
+                        label={"Street Address"}
+                        required={true}
+                        errorMessage={"Street address is required."}
+                        innerRef={billingAddressStreetAddressInputRef}
                       />
 
                       <div className="grid grid-cols-[122px_1fr] gap-x-2">
                         <LabelInput
-                          id="shipping_address.postal_code"
-                          name="shipping_address.postal_code"
+                          id="billing_address_pincode"
+                          name="billing_address_pincode"
                           type="text"
                           placeholder=" "
-                          onChange={null}
-                          onBlur={null}
-                          value={""}
-                          autocomplete="postal-code"
-                          inputHasError={null}
-                          label={"Postal code"}
+                          onChange={billingAddressPincodeChangedHandler}
+                          onBlur={billingAddressPincodeBlurHandler}
+                          value={enteredBillingAddressPincode}
+                          inputHasError={billingAddressPincodeInputHasError}
+                          autoComplete="pincode"
+                          label={"Pincode"}
+                          pattern="[0-9]*" // Only allow numbers (digits 0-9)
+                          required={true}
+                          errorMessage={"Pincode is required."}
+                          innerRef={billingAddressPincodeInputRef}
                         />
-
                         <LabelInput
-                          id="shipping_address.city"
-                          name="shipping_address.city"
+                          id="billing_address_city"
+                          name="billing_address_city"
                           type="text"
                           placeholder=" "
-                          onChange={null}
-                          onBlur={null}
-                          value={""}
-                          autocomplete="address-level2"
-                          inputHasError={null}
+                          onChange={billingAddressCityChangedHandler}
+                          onBlur={billingAddressCityBlurHandler}
+                          value={enteredBillingAddressCity}
+                          inputHasError={
+                            billingAddressCityInputHasError ||
+                            billingAddressPincodeInputHasError
+                          }
+                          autoComplete="address-city"
                           label={"City"}
+                          // readOnly={true}
+                          required={true}
+                          errorMessage={"City is required."}
+                          innerRef={billingAddressCityInputRef}
                         />
                       </div>
-
-                      <LabelInput
-                        id="shipping_address.province"
-                        name="shipping_address.province"
-                        type="text"
-                        placeholder=" "
-                        onChange={null}
-                        onBlur={null}
-                        value={""}
-                        autocomplete="address-level1"
-                        inputHasError={null}
-                        label={"Country"}
-                      />
                       <div className="grid grid-cols-2 gap-x-2">
                         <LabelInput
-                          id="shipping_address.phone"
-                          name="shipping_address.phone"
+                          id="billing_address_state"
+                          name="billing_address_state"
                           type="text"
                           placeholder=" "
-                          onChange={null}
-                          onBlur={null}
-                          value={""}
-                          autocomplete="tel"
-                          inputHasError={null}
-                          label={"Phone"}
+                          onChange={billingAddressStateChangedHandler}
+                          onBlur={billingAddressStateBlurHandler}
+                          value={enteredBillingAddressState}
+                          inputHasError={
+                            billingAddressStateInputHasError ||
+                            billingAddressPincodeInputHasError
+                          }
+                          autoComplete="address-state"
+                          label={"State"}
+                          // readOnly={true}
+                          required={true}
+                          errorMessage={"State is required."}
+                          innerRef={billingAddressStateInputRef}
                         />
                         <LabelInput
-                          id="shipping_address.phone"
-                          name="shipping_address.phone"
+                          id="billing_address_country"
+                          name="billing_address_country"
                           type="text"
                           placeholder=" "
-                          onChange={null}
-                          onBlur={null}
-                          value={""}
-                          autocomplete="tel"
-                          inputHasError={null}
-                          label={"Phone"}
+                          onChange={billingAddressCountryChangedHandler}
+                          onBlur={billingAddressCountryBlurHandler}
+                          value={enteredBillingAddressCountry}
+                          inputHasError={
+                            billingAddressCountryInputHasError ||
+                            billingAddressPincodeInputHasError
+                          }
+                          autoComplete="address-country"
+                          label={"Country"}
+                          // readOnly={true}
+                          required={true}
+                          errorMessage={"Country is required."}
+                          innerRef={billingAddressCountryInputRef}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-2">
+                        <LabelInput
+                          id="billing_address_receiver_mobile"
+                          name="billing_address_receiver_mobile"
+                          type="text"
+                          placeholder=" "
+                          onChange={billingAddressReceiverMobileChangedHandler}
+                          onBlur={billingAddressReceiverMobileBlurHandler}
+                          value={enteredBillingAddressReceiverMobile}
+                          inputHasError={
+                            billingAddressReceiverMobileInputHasError
+                          }
+                          autoComplete="tel"
+                          label={"Receiver Mobile"}
+                          required={true}
+                          pattern="[0-9]*" // Only allow numbers (digits 0-9)
+                          maxLength={10} // Optionally, you can set a maximum length for the input
+                          errorMessage={"Receiver mobile is required."}
+                          innerRef={billingAddressReceiverMobileInputRef}
+                        />
+                        <LabelInput
+                          id="billing_address_alternative_mobile"
+                          name="billing_address_alternative_mobile"
+                          type="text"
+                          placeholder=" "
+                          onChange={
+                            billingAddressAlternativeMobileChangedHandler
+                          }
+                          onBlur={billingAddressAlternativeMobileBlurHandler}
+                          value={enteredBillingAddressAlternativeMobile}
+                          inputHasError={
+                            billingAddressAlternativeMobileInputHasError
+                          }
+                          autoComplete="tel"
+                          label={"Alternative Mobile"}
+                          required={true}
+                          pattern="[0-9]*" // Only allow numbers (digits 0-9)
+                          maxLength={10} // Optionally, you can set a maximum length for the input
+                          errorMessage={"Alternative mobile is required."}
+                          innerRef={billingAddressAlternativeMobileInputRef}
                         />
                       </div>
                     </div>
@@ -370,9 +925,7 @@ export default function Page() {
                   Order summary
                 </div>
                 {cartItems.map((item) => (
-                  <>
-                    <CheckoutItem key={item.product_id} data={item} />
-                  </>
+                  <CheckoutItem key={item.product_id} data={item} />
                 ))}
                 <div className="mb-2 flex items-center justify-between pt-2 ">
                   <p>Subtotal</p>
@@ -398,7 +951,12 @@ export default function Page() {
                 </div>
                 {/* BUTTON START */}
                 <div className="pt-2 w-full  flex-col">
-                  <Button variant="slim" className="h-[54px]">
+                  <Button
+                    variant="slim"
+                    className="h-[54px]"
+                    onClick={formCheckoutHandler}
+                    // isLoading={isLoading}
+                  >
                     CHECKOUT
                   </Button>
                 </div>
@@ -406,13 +964,15 @@ export default function Page() {
               </div>
 
               <div className="p-5 my-5 bg-black/[0.05] rounded-none">
-                <div class="w-full flex flex-col">
-                  <div class="mb-4">
-                    <h3 class="text-base-semi font-medium ">Discount</h3>
+                <div className="w-full flex flex-col">
+                  <div className="mb-4">
+                    <h3 className="text-base-semi font-medium ">
+                      Coupon Discount
+                    </h3>
                   </div>
-                  <div class="text-small-regular">
-                    <form class="w-full">
-                      <div class="grid grid-cols-[1fr_80px] gap-x-2">
+                  <div className="text-small-regular">
+                    <form className="w-full">
+                      <div className="grid grid-cols-[1fr_80px] gap-x-2 ">
                         <LabelInput
                           id="shipping_address.phone"
                           name="shipping_address.phone"
@@ -421,9 +981,10 @@ export default function Page() {
                           onChange={null}
                           onBlur={null}
                           value={""}
-                          autocomplete="tel"
+                          autoComplete="tel"
                           inputHasError={null}
                           label={"Code"}
+                          className={"bg-white"}
                         />
                         <div>
                           <Button variant="slim" className="h-[54px]">
@@ -449,7 +1010,7 @@ export default function Page() {
                     <div className="text-base-regular relative flex items-center border border-gray-200">
                       <select
                         name="shipping_address.country_code"
-                        autocomplete="country"
+                        autoComplete="country"
                         className="flex-1 appearance-none border-none bg-transparent px-4 py-2.5 outline-none transition-colors duration-150 focus:border-gray-700"
                       >
                         <option value="">Country</option>

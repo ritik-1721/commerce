@@ -1,66 +1,36 @@
+// Regular expression for email validation
 const emailRegex =
   /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
-const isNotEmpty = (value) => {
+// Check if the value is not empty and trimmed
+const isNotEmptyAndTrimmed = (value) => {
   if (!value) {
     return false;
   }
-  if (value.toString().trim() === "") {
-    return false;
-  }
-  return true;
+  return value.toString().trim() !== "";
 };
 
+// Check if the value is not empty
+const isNotEmpty = isNotEmptyAndTrimmed;
+
+// Check if the value is a positive ID
 const isID = (value) => {
-  if (!value) {
-    return false;
-  }
-  if (value.toString().trim() === "") {
-    return false;
-  }
-  if (Number(value) <= 0) {
-    return false;
-  }
-  return true;
+  return isNotEmptyAndTrimmed(value) && Number(value) > 0;
 };
 
+// Check if the value is a valid email address
 const isEmail = (value) => {
-  if (!value) {
-    return false;
-  }
-  if (value.toString().trim() === "") {
-    return false;
-  }
-  if (emailRegex.test(value) === false) {
-    return false;
-  }
-  return true;
+  return isNotEmptyAndTrimmed(value) && emailRegex.test(value);
 };
 
+// Check if the value is a valid phone number (10 digits)
 const isPhoneNo = (value) => {
-  if (!value) {
-    return false;
-  }
-  if (value.toString().trim() === "") {
-    return false;
-  }
-  if (value.toString().trim().length != 10) {
-    return false;
-  }
-  return true;
+  return isNotEmptyAndTrimmed(value) && value.toString().trim().length === 10;
 };
 
+// Check if the value is a valid password (at least 7 characters)
 const isPassword = (value) => {
-  if (!value.toString()) {
-    return false;
-  }
-  if (value.toString().trim() === "") {
-    return false;
-  }
-  if (value.toString().trim().length < 7) {
-    return false;
-  }
-  return true;
+  return isNotEmptyAndTrimmed(value) && value.toString().trim().length >= 7;
 };
 
 module.exports = {

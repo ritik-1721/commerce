@@ -42,7 +42,50 @@ const formatDate = (str, date = new Date()) => {
   return date;
 };
 
+// Truncate a string and add an ellipsis if it's longer than a certain length
+const truncateString = (str, maxLength) => {
+  if (str.length > maxLength) {
+    return str.slice(0, maxLength) + "…";
+  }
+  return str;
+};
+// Deep clone an object
+const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+
+// Generate a universally unique identifier (UUID)
+const generateUUID = () => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
+// Add a timeout to a promise
+const promiseWithTimeout = (promise, timeoutMillis) => {
+  const timeoutPromise = new Promise((resolve, reject) => {
+    setTimeout(() => reject(new Error("Promise timed out")), timeoutMillis);
+  });
+
+  return Promise.race([promise, timeoutPromise]);
+};
+
+// Check if a key exists in an object
+const doesKeyExist = (obj, key) => key in obj;
+
+
+const deduplicateArray = (arr) => {
+  return [...new Set(arr)];
+};
+
+
 module.exports = {
+  truncateString,
+  generateUUID,
+  deepClone,
+  deduplicateArray,
+  promiseWithTimeout,
+  doesKeyExist,
   formatDate,
   filterDataValues,
   base_url,

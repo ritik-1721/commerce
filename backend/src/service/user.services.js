@@ -59,11 +59,11 @@ const QueryListOfUsers = async () => {
   }
 };
 
-const UpdateUserById = async (category_id, info) => {
+const UpdateUserById = async (user_id, info) => {
   try {
     const result = await UserMaster.update(
       { ...info },
-      { where: { category_id: Number(category_id), isDelete: false } }
+      { where: { user_id: Number(user_id), isDelete: false } }
     );
     return result[0] > 0 ? true : false;
   } catch (err) {

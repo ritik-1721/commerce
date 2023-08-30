@@ -7,9 +7,6 @@ import WebNavLinks from "./WebNavLinks";
 import NavMenuSkeleton from "@/components/skeleton/NavMenuSkeleton";
 
 const NavMenu = () => {
-
-  
-
   const links = useSelector((state) => state.navLink.links);
   const isLoading = useSelector((state) => state.navLink.isLoading);
   const isError = useSelector((state) => state.navLink.isError);

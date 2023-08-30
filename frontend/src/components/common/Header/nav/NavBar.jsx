@@ -17,6 +17,7 @@ import { authModalActions } from "@/store/slice/authModalSlice";
 import ProfileDropdownMenu from "./ProfileDropdownMenu";
 import ErrorBoundary from "@/components/error/ErrorBoundaryOld";
 import { useDispatch, useSelector } from "react-redux";
+import { drawerAction } from "@/store/slice/drawerSlice";
 
 const tooltipBtnClass =
   "inline-flex items-center p-2 text-sm text-gray-800 rounded-full hover:text-gray-500 focus:outline-none hover:scale-105";
@@ -106,10 +107,16 @@ const LoginButton = memo(function LoginButton({ onClick }) {
 LoginButton.displayName = "LoginButton";
 
 const MobileMenuButton = memo(function MobileMenuButton() {
+  const dispatch = useDispatch();
+  const toggleDrawer = () => {
+    dispatch(drawerAction.toggleDrawer());
+  };
+
   return (
     <button
       data-collapse-toggle="navbar-sticky"
       type="button"
+      onClick={toggleDrawer}
       className={cn(tooltipBtnClass, "md:hidden")}
       aria-controls="navbar-sticky"
       aria-expanded="false"

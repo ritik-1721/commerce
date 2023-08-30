@@ -1,6 +1,8 @@
 // import ShippingAddressForm from "@/components/checkout/ShippingAddressForm";
 import Wrapper from "@/components/ui/Wrapper";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import CryptoJS from "crypto-js";
+import { useRouter } from "next/router";
 import CheckoutItem from "@/components/cart/CheckoutItem";
 import LabelInput from "@/components/ui/LabelInput";
 import useInput from "@/hooks/use-input";
@@ -9,6 +11,7 @@ import Button from "@/components/ui/Button/Button";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { CreateOrderApi, VerifyOrderApi } from "@/utils/service";
 import useRazorpay from "react-razorpay";
+import { SetCart } from "@/store/thunks/cartThunk";
 
 function SameAsBillingCheckbox({ sameAsBilling, onClick }) {
   return (
@@ -34,12 +37,13 @@ function SameAsBillingCheckbox({ sameAsBilling, onClick }) {
 }
 export default function Page() {
   const Razorpay = useRazorpay();
+  const dispatch = useDispatch();
   const userDetails = useSelector((state) => state.auth.userDetails);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [formIsValid, setFormIsValid] = useState(false);
   const [sameAsBilling, setSameAsBilling] = useState(false);
-
+  const router = useRouter();
   const axios = { post: function post() {} };
   function createVerify(data) {
     return axios.post(`http://localhost:5000/api/verify`, data);
@@ -360,8 +364,17 @@ export default function Page() {
             const formData = new FormData();
             formData.set("razorpayPaymentId", response.razorpay_payment_id);
             formData.set("razorpayOrderId", response.razorpay_order_id);
-            formData.set("razorpaySignature" , response.razorpay_signature );
-            const result = await VerifyOrderApi(formData);
+            formData.set("razorpaySignature", response.razorpay_signature);
+            const req = await VerifyOrderApi(formData);
+            const data = await req.json();
+            if (data.ok == false) {
+              return false;
+            }
+            dispatch(SetCart());
+            
+            router.push(
+              `/order/${data.orderDetails.order_id}/${CryptoJS.SHA256(data.orderDetails.order_id.toString())}`
+            );
           },
           prefill: {
             name: userDetails.fname + " " + userDetails.lname,
@@ -382,7 +395,7 @@ export default function Page() {
         console.log(error);
       }
     },
-    [userDetails]
+    [userDetails, router, dispatch]
   );
 
   const formCheckoutHandler = useCallback(
@@ -920,7 +933,7 @@ export default function Page() {
 
           <div className="flex-[2]">
             <div className="">
-              <div className="p-5 my-5 bg-black/[0.05] rounded-none">
+              <div className="p-5 my-5 bg-gray-50 rounded-none">
                 <div className="  text-[28px] font-semibold ">
                   Order summary
                 </div>
@@ -963,7 +976,7 @@ export default function Page() {
                 {/* BUTTON END */}
               </div>
 
-              <div className="p-5 my-5 bg-black/[0.05] rounded-none">
+              <div className="p-5 my-5 bg-gray-50 rounded-none">
                 <div className="w-full flex flex-col">
                   <div className="mb-4">
                     <h3 className="text-base-semi font-medium ">

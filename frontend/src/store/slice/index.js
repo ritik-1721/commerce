@@ -4,6 +4,7 @@ import authSlice from "./authSlice";
 import categoryFiltersSlice from "./categoryFiltersSlice";
 import wishlistSlice from "./wishlistSlice";
 import cartSlice from "./cartSlice";
+import drawerSlice from "./drawerSlice";
 
 const rootReducer = {
   reducer: {
@@ -13,6 +14,7 @@ const rootReducer = {
     categoryFilters: categoryFiltersSlice,
     wishlist: wishlistSlice,
     cart: cartSlice,
+    drawer: drawerSlice
   },
 };
 

@@ -12,7 +12,7 @@ const {
 router.post("/add", verifyToken, addProduct);
 router.get("/all", getAllProduct);
 router.get("/:slug", getProductDetailsByProductSlug);
-router.get("/c/:slug", getProductsCategorySlug);
+router.post("/c/:slug", getProductsCategorySlug);
 router.get("/imgs/:id", getAllProductImgsById);
 router.post("/add-img", verifyToken, addProductImg);
 

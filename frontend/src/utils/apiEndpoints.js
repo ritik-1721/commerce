@@ -19,6 +19,11 @@ export const CART_ADD_ITEM_API = `${API_URL}api/cart/add/`; // => :id /-token
 //ORDER API ENDPOINTS ------------------------------------------------------------------------------------------------
 export const CREATE_ORDER_API = `${API_URL}api/order/create`; // => /-token
 export const VERIFY_ORDER_API = `${API_URL}api/order/verify`; // => /-token
+export const GET_ORDER_API = `${API_URL}api/order/`; // => /-token :id order
+
+
+//CATEGORY API ENDPOINTS ---------------------------------------------------------------------------------------------
+export const CATEGORY_ATTRIBUTE_VALUES_API  = `${API_URL}api/category/category-attribute-values/`; // :id category
 
 //ENDPOINTS ----------------------------------------------------------------------------------------------------------
 export const CATEGORY_HIERARCHY_API = `${API_URL}api/category/hierarchy/`;

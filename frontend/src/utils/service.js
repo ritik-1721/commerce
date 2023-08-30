@@ -32,6 +32,14 @@ export const addToCartApi = async (productId) => {
 //ORDER SERVICES -------------------------------------------------------------------------------------------------
 export const CreateOrderApi = async (data) =>  {  return await  fetchPost(apiEndpoints.CREATE_ORDER_API, data, requireAuthorization); }
 export const VerifyOrderApi = async (data) =>  {  return await  fetchPost(apiEndpoints.VERIFY_ORDER_API, data, requireAuthorization); }
+export const GetOrderApi = async (id) => { 
+  return await  fetchGet(`${apiEndpoints.GET_ORDER_API}${id}`, requireAuthorization);
+}
+
+//Category ORDER SERVICES ----------------------------------------------------------------------------------------
+export const fetchCategoryAttributeValuesApi = async (id) => {
+  return await fetchGet(`${apiEndpoints.CATEGORY_ATTRIBUTE_VALUES_API}${id}`);
+};
 
 //SERVICES -------------------------------------------------------------------------------------------------------
 export const fetchCategoryHierarchy = async (id) => {
@@ -40,8 +48,8 @@ export const fetchCategoryHierarchy = async (id) => {
 export const getCategoryDetailsBySlugApi = async (slug) => {
   return await fetchGet(`${apiEndpoints.CATEGOTY_DETALIS_BY_SLUG_API}${slug}`);
 };
-export const getProductsByCategorySlugApi = async (slug) => {
-  return await fetchGet(`${apiEndpoints.PRODUCTS_BY_CATEGOTY_SLUG_API}${slug}`);
+export const getProductsByCategorySlugApi = async (slug,data) => {
+  return await fetchPost(`${apiEndpoints.PRODUCTS_BY_CATEGOTY_SLUG_API}${slug}`,data);
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

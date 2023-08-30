@@ -78,8 +78,17 @@ const deduplicateArray = (arr) => {
   return [...new Set(arr)];
 };
 
+function isEmptyObject(obj) {
+  for (let key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      return false;
+    }
+  }
+  return true;
+}
 
 module.exports = {
+  isEmptyObject,
   truncateString,
   generateUUID,
   deepClone,

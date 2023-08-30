@@ -2,6 +2,7 @@ import { Fragment, useState, useEffect, useCallback } from "react";
 import { Dialog, Disclosure, Menu, Transition } from "@headlessui/react";
 import ProductGrid from "@/components/product/ProductGrid";
 import { getProductsByCategorySlugApi } from "@/utils/service";
+import NotFound from "@/components/common/NotFound/NotFound";
 
 import {
   Squares2X2Icon,
@@ -14,7 +15,10 @@ import {
 // import NotFound from "../NotFound/NotFound";
 import { useDispatch, useSelector } from "react-redux";
 import ProductGridSkeleton from "@/components/skeleton/ProductGridSkeleton";
-import { fetchSubCategorys } from "@/store/thunks/categoryFiltersThunk";
+import {
+  fetchSubCategorys,
+  fetchCategoryAttributeValues,
+} from "@/store/thunks/categoryFiltersThunk";
 import Link from "next/link";
 import { BASE_URL } from "@/utils/constants";
 import CategoryFiltersSkeleton from "@/components/skeleton/CategoryFiltersSkeleton";
@@ -26,32 +30,6 @@ const sortOptions = [
   { name: "Price: Low to High", href: "#", current: false },
   { name: "Price: High to Low", href: "#", current: false },
 ];
-const filters = [
-  {
-    id: "color",
-    name: "Color",
-    options: [
-      { value: "white", label: "White", checked: false },
-      { value: "beige", label: "Beige", checked: false },
-      { value: "blue", label: "Blue", checked: true },
-      { value: "brown", label: "Brown", checked: false },
-      { value: "green", label: "Green", checked: false },
-      { value: "purple", label: "Purple", checked: false },
-    ],
-  },
-  {
-    id: "size",
-    name: "Size",
-    options: [
-      { value: "2l", label: "2L", checked: false },
-      { value: "6l", label: "6L", checked: false },
-      { value: "12l", label: "12L", checked: false },
-      { value: "18l", label: "18L", checked: false },
-      { value: "20l", label: "20L", checked: false },
-      { value: "40l", label: "40L", checked: true },
-    ],
-  },
-];
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -61,6 +39,9 @@ function MobileFilterDialog({
   mobileFiltersOpen,
   setMobileFiltersOpen,
   subCategories,
+  categoryAttrVals,
+  handleCheckboxChange,
+  filterAttrValues,
 }) {
   return (
     <Transition.Root show={mobileFiltersOpen} as={Fragment}>
@@ -159,10 +140,10 @@ function MobileFilterDialog({
                   </Disclosure>
                 )}
 
-                {filters.map((section) => (
+                {categoryAttrVals.map((section) => (
                   <Disclosure
                     as="div"
-                    key={section.id}
+                    key={section.attribute_id}
                     className="border-t border-gray-200 px-4 py-6"
                   >
                     {({ open }) => (
@@ -170,7 +151,7 @@ function MobileFilterDialog({
                         <h3 className="-mx-2 -my-3 flow-root">
                           <Disclosure.Button className="flex w-full items-center justify-between bg-white px-2 py-3 text-gray-400 hover:text-gray-500">
                             <span className="font-medium text-gray-900">
-                              {section.name}
+                              {section.attribute_name}
                             </span>
                             <span className="ml-6 flex items-center">
                               {open ? (
@@ -189,27 +170,40 @@ function MobileFilterDialog({
                         </h3>
                         <Disclosure.Panel className="pt-6">
                           <div className="space-y-6">
-                            {section.options.map((option, optionIdx) => (
-                              <div
-                                key={option.value}
-                                className="flex items-center"
-                              >
-                                <input
-                                  id={`filter-mobile-${section.id}-${optionIdx}`}
-                                  name={`${section.id}[]`}
-                                  defaultValue={option.value}
-                                  type="checkbox"
-                                  defaultChecked={option.checked}
-                                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                />
-                                <label
-                                  htmlFor={`filter-mobile-${section.id}-${optionIdx}`}
-                                  className="ml-3 min-w-0 flex-1 text-gray-500"
+                            {section.attribute_values.map(
+                              (option, optionIdx) => (
+                                <div
+                                  key={option.attribute_value}
+                                  className="flex items-center"
                                 >
-                                  {option.label}
-                                </label>
-                              </div>
-                            ))}
+                                  <input
+                                    id={`filter-mobile-${section.attribute_id}-${optionIdx}`}
+                                    name={`${section.attribute_id}[]`}
+                                    defaultValue={option.attribute_value}
+                                    type="checkbox"
+                                    onClick={() =>
+                                      handleCheckboxChange(
+                                        section.attribute_id,
+                                        option.attribute_value_id
+                                      )
+                                    }
+                                    checked={
+                                      filterAttrValues[section.attribute_id][
+                                        option.attribute_value_id
+                                      ]
+                                    }
+                                    defaultChecked={/*option.checked*/ false}
+                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                  />
+                                  <label
+                                    htmlFor={`filter-mobile-${section.attribute_id}-${optionIdx}`}
+                                    className="ml-3 min-w-0 flex-1 text-gray-500"
+                                  >
+                                    {option.attribute_value_description}
+                                  </label>
+                                </div>
+                              )
+                            )}
                           </div>
                         </Disclosure.Panel>
                       </>
@@ -268,18 +262,20 @@ function CategoryList({ subCategories }) {
   );
 }
 
-function FilterSection({ section }) {
+function FilterSection({ section, handleCheckboxChange, filterAttrValues }) {
   return (
     <Disclosure
       as="div"
-      key={section.id}
+      key={section.attribute_id}
       className="border-b border-gray-200 py-6"
     >
       {({ open }) => (
         <>
           <h3 className="-my-3 flow-root">
             <Disclosure.Button className="flex w-full items-center justify-between bg-white py-3 text-sm text-gray-400 hover:text-gray-500">
-              <span className="font-medium text-gray-900">{section.name}</span>
+              <span className="font-medium text-gray-900">
+                {section.attribute_name}
+              </span>
               <span className="ml-6 flex items-center">
                 {open ? (
                   <MinusIcon className="h-5 w-5" aria-hidden="true" />
@@ -291,21 +287,32 @@ function FilterSection({ section }) {
           </h3>
           <Disclosure.Panel className="pt-6">
             <div className="space-y-4">
-              {section.options.map((option, optionIdx) => (
+              {section.attribute_values.map((option, optionIdx) => (
                 <div key={option.value} className="flex items-center">
                   <input
-                    id={`filter-${section.id}-${optionIdx}`}
-                    name={`${section.id}[]`}
-                    defaultValue={option.value}
+                    id={`filter-${section.attribute_id}-${optionIdx}`}
+                    name={`${section.attribute_id}[]`}
+                    defaultValue={option.attribute_value_id}
                     type="checkbox"
-                    defaultChecked={option.checked}
+                    defaultChecked={/*option.checked*/ false}
+                    checked={
+                      filterAttrValues?.[section.attribute_id]?.[
+                        option.attribute_value_id
+                      ]
+                    }
                     className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    onClick={() =>
+                      handleCheckboxChange(
+                        section.attribute_id,
+                        option.attribute_value_id
+                      )
+                    }
                   />
                   <label
-                    htmlFor={`filter-${section.id}-${optionIdx}`}
+                    htmlFor={`filter-${section.attribute_id}-${optionIdx}`}
                     className="ml-3 text-sm text-gray-600"
                   >
-                    {option.label}
+                    {option.attribute_value_description}
                   </label>
                 </div>
               ))}
@@ -370,7 +377,7 @@ function GridSection({ products }) {
   return (
     <div className="lg:col-span-3">
       {products.loading === true && <ProductGridSkeleton />}
-      {products.error !== null && `<NotFound view="NO_PRODUCT_FOUND_VIEW" />`}
+      {products.error !== null && <NotFound view="NO_PRODUCT_FOUND_VIEW" />}
       {products.error === null && products.loading === false && (
         <ProductGrid productList={products.productList} />
       )}
@@ -384,7 +391,34 @@ export default function CategoryFilters({ categoryId, categoryName, slug }) {
   const subCategories = useSelector(
     (state) => state.categoryFilters.subCategories
   );
+  const categoryAttrVals = useSelector(
+    (state) => state.categoryFilters.categoryAttrVals.list
+  );
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  const [filterAttrValues, setFilterAttrValues] = useState({});
+
+  const handleCheckboxChange = (filterAttr, filterValue) => {
+    setFilterAttrValues((prevFilters) => ({
+      ...prevFilters,
+      [filterAttr]: {
+        ...prevFilters[filterAttr],
+        [filterValue]: !prevFilters[filterAttr][filterValue],
+      },
+    }));
+  };
+
+  useEffect(() => {
+    const initialFilters = {};
+    categoryAttrVals?.map((attrs) => {
+      initialFilters[attrs.attribute_id] = {};
+      attrs.attribute_values.map((vals) => {
+        initialFilters[attrs.attribute_id][vals.attribute_value_id] = false;
+      });
+    });
+    setFilterAttrValues(initialFilters);
+  }, [categoryAttrVals]);
+
   const [products, setProducts] = useState({
     loading: true,
     productList: [],
@@ -396,10 +430,30 @@ export default function CategoryFilters({ categoryId, categoryName, slug }) {
     setTimeout(() => setIsLoading(false), 1000);
   }, []);
 
+  const formatFiltersForAPI = (selectedFilters) => {
+    const formattedFilters = {};
+
+    for (const filterType in selectedFilters) {
+      if (selectedFilters.hasOwnProperty(filterType)) {
+        formattedFilters[filterType] = Object.keys(
+          selectedFilters[filterType]
+        ).filter((item) => selectedFilters[filterType][item]);
+      }
+    }
+
+    return formattedFilters;
+  };
+
   const getProductGrid = useCallback(async () => {
     try {
+      const formData = new FormData();
+      formData.set(
+        "filter",
+        JSON.stringify(formatFiltersForAPI(filterAttrValues))
+      );
       const req = await getProductsByCategorySlugApi(
-        `${slug}?user_id=${userDetails ? userDetails.user_id : 0}`
+        `${slug}?user_id=${userDetails ? userDetails.user_id : 0}`,
+        formData
       );
       const data = await req.json();
       if (data.ok === false) {
@@ -417,13 +471,14 @@ export default function CategoryFilters({ categoryId, categoryName, slug }) {
         });
       }
     } catch (error) {
+      console.log(error);
       setProducts({
         ...products,
         loading: false,
         error: "something went wrong.",
       });
     }
-  }, [slug, userDetails]);
+  }, [slug, userDetails, filterAttrValues]);
 
   useEffect(() => {
     getProductGrid();
@@ -431,6 +486,7 @@ export default function CategoryFilters({ categoryId, categoryName, slug }) {
 
   useEffect(() => {
     dispatch(fetchSubCategorys(categoryId));
+    dispatch(fetchCategoryAttributeValues(categoryId));
   }, [dispatch, categoryId]);
 
   if (isLoading) {
@@ -444,6 +500,9 @@ export default function CategoryFilters({ categoryId, categoryName, slug }) {
           mobileFiltersOpen={mobileFiltersOpen}
           setMobileFiltersOpen={setMobileFiltersOpen}
           subCategories={subCategories}
+          categoryAttrVals={categoryAttrVals}
+          handleCheckboxChange={handleCheckboxChange}
+          filterAttrValues={filterAttrValues}
         />
 
         <main className="mx-auto max-w-full px-1 sm:px-2 lg:px-8">
@@ -481,11 +540,27 @@ export default function CategoryFilters({ categoryId, categoryName, slug }) {
             <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
               {/* Filters */}
               <form className="hidden lg:block">
+                
+                <div className="border-b border-gray-200 py-6">
+                  <h3 className="-mx-2 -my-3 flow-root">
+                    <button
+                      className="flex w-full items-center justify-between bg-white px-2 py-3 text-gray-400 hover:text-gray-500"
+                    >
+                      <span className="font-medium text-gray-900">Filter</span>
+                    </button>
+                  </h3>
+                </div>
                 <h3 className="sr-only">Categories</h3>
+
                 <CategoryList subCategories={subCategories} />
 
-                {filters.map((section, index) => (
-                  <FilterSection section={section} key={index} />
+                {categoryAttrVals?.map((section, index) => (
+                  <FilterSection
+                    section={section}
+                    key={index}
+                    handleCheckboxChange={handleCheckboxChange}
+                    filterAttrValues={filterAttrValues}
+                  />
                 ))}
               </form>
 

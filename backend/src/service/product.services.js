@@ -1,5 +1,6 @@
 const { promises } = require("fs");
 const db = require("../models/index");
+const { isEmptyObject } = require("../helpers/local.helpers");
 
 // 👇️ Models Use
 const ProductImg = db.productImg;
@@ -161,13 +162,28 @@ const QueryProductBySlug = async (product_slug) => {
   }
 };
 
-const QueryListOfProductsByCategoryId = async (category_id, user_id = 0) => {
+const QueryListOfProductsByCategoryId = async ( category_id, filterObj, user_id = 0 ) => {
   try {
-    const extQuery =
-      user_id && user_id !== 0
-        ? ` t1_2.user_id=${user_id} `
-        : ` t1_2.user_id=0 `;
+    let filterQuery = "";
+    let filterIsApply = false;
+    const extQuery = user_id && user_id !== 0 ? ` t1_2.user_id=${user_id} ` : ` t1_2.user_id=0 `;
     const base_url = "http://localhost:1000/";
+    const filterIsEmpty = isEmptyObject(filterObj);
+    if (!filterIsEmpty) {
+      const filterConditions = [];
+      for (const key in filterObj) {
+        if (filterObj.hasOwnProperty(key)) {
+          const value = filterObj[key];
+          if (value != "") {
+            filterConditions.push(`(t4.attribute_id = ${key} AND FIND_IN_SET(t4.attribute_value_id, '${value}'))`);
+            filterIsApply = true;
+          }
+        }
+      }
+      if (filterConditions.length > 0) {
+        filterQuery = ` AND t1.product_id = t4.product_id AND (${filterConditions.join( " OR " )})`;
+      }
+    }
     const result = await db.sequelize.query(
       `
       SELECT 
@@ -176,13 +192,22 @@ const QueryListOfProductsByCategoryId = async (category_id, user_id = 0) => {
             t3.*,MIN(t1_1.priority),
             CONCAT( "${base_url}static/images/" ,IFNULL(t1_1.img_name,"default.jpg"),"?w=240&h=240") as img_link,
             ifnull(t1_2.wishlist_id,0) as wishlist_id
+            ${filterIsApply ? `,t4.attribute_id ,t4.attribute_value_id ` : ""}
       FROM 
             product_masters t1 
             LEFT JOIN product_imgs t1_1 ON ( t1.product_id=t1_1.product_id AND t1_1.isDelete=0 )
             LEFT JOIN wishlist_masters t1_2 ON ( t1.product_id=t1_2.product_id AND ${extQuery} AND t1_2.isDelete=0 )
-            , gst_masters t2 , category_masters t3 
-      WHERE t1.isDelete = 0 AND t1.gst_id = t2.gst_id AND t2.isDelete = 0 AND FIND_IN_SET(${category_id}, t1.categorys_ids) And t3.category_id = ${category_id}
-      GROUP BY t1.product_title
+            , gst_masters t2 
+            , category_masters t3
+            ${filterIsApply ? `,product_attribute_values_trans t4` : ""}
+      WHERE 
+            t1.isDelete = 0 
+            AND t1.gst_id = t2.gst_id 
+            AND t2.isDelete = 0 
+            AND FIND_IN_SET(${category_id}, t1.categorys_ids) 
+            And t3.category_id = ${category_id}
+            ${filterQuery}
+      GROUP BY t1.product_title 
       `,
       { type: db.QueryTypes.SELECT }
     );

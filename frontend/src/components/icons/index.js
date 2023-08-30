@@ -28,3 +28,6 @@ export { default as CatFlowerPotIcon } from "./CatFlowerPot";
 export { default as SettingIcon } from "./Setting";
 export { default as LogOutIcon } from "./LogOut";
 export { default as PersonProfileIcon } from "./PersonProfile";
+export { default as ArrowRightTopIcon } from "./ArrowRightTop";
+
+

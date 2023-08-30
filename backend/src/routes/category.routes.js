@@ -7,6 +7,7 @@ const {
   updateIsActiveCategory,
   getCategoryBySlug,
   categoryHierarchy,
+  getCategoryAttributeValuesByCategoryId,
 } = require("../controllers/category.controllers.js");
 const {
   getProductByCategorySlug,
@@ -15,6 +16,7 @@ const {
 router.post("/add", verifyToken, addCategory);
 router.get("/hieratchy", categoryHieratchy);
 router.get("/hierarchy/:id", categoryHierarchy);
+router.get("/category-attribute-values/:id", getCategoryAttributeValuesByCategoryId);
 router.get("/p/:slug", getProductByCategorySlug);
 router.get("/:slug", getCategoryBySlug);
 router.delete("/:id", verifyToken, deleteCategory);

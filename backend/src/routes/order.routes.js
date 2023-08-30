@@ -4,9 +4,11 @@ const {
   createOrder,
   verifyOrder,
   addInitialData,
+  getOrder
 } = require("../controllers/order.controllers");
 
 router.post("/create", verifyToken, createOrder);
+router.get("/:id", getOrder);
 router.post("/verify", verifyToken, verifyOrder);
 router.post("/add-initial-data", verifyToken, addInitialData);
 

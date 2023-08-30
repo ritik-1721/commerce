@@ -4,6 +4,7 @@ const {
 } = require("../helpers/razorpay.helpers");
 const {
   CreateOrder,
+  QueryOrderItemsByID,
   UpdateOrderById,
   BulkCreateOrderItem,
   QueryOrderByID,
@@ -68,6 +69,50 @@ const mapAddressData = (data, fields, user_id, currentDateTime) => {
   return addressData;
 };
 
+const getFullOrderDetilsById = async (order_id) => {
+  try {
+    const orderDetails = await QueryOrderByID(order_id);
+    const orderItems = await QueryOrderItemsByID(order_id);
+    if (orderDetails === false || orderItems === false) {
+      return false;
+    }
+    return {
+      ...orderDetails,
+      payment_request: orderDetails.payment_request?JSON.parse(orderDetails.payment_request):orderDetails.payment_request,
+      payment_response: orderDetails.payment_response?JSON.parse(orderDetails.payment_response):orderDetails.payment_response,
+      billing_address: JSON.parse(orderDetails.billing_address),
+      shipping_address: JSON.parse(orderDetails.shipping_address),
+      orderItems: orderItems,
+    };
+  } catch (error) {
+    console.error("getFullOrderDetilsById",error);
+    return false;
+  }
+};
+
+const getOrder = async (req, res) => {
+  try {
+    const order_id = req.params.id;
+    const orderDetails = await getFullOrderDetilsById(order_id);
+    if (orderDetails === false) {
+      return res
+        .status(500)
+        .json({ ok: false, message: "Something went wrong." });
+    }
+    return res.status(200).json({
+      ok: true,
+      message: "Order details.",
+      orderDetails,
+    });
+  } catch (error) {
+    console.error("getOrder",error);
+    return res.status(500).json({
+      ok: false,
+      message: "Something went wrong.",
+    });
+  }
+};
+
 const verifyOrder = async (req, res) => {
   try {
     const currentDateTime = getCurrentDateTime();
@@ -81,12 +126,12 @@ const verifyOrder = async (req, res) => {
 
     const payment = await razorpayInstance.payments.fetch(razorpayPaymentId);
     const orderDetails = await QueryOrderByID(payment.notes.order_id);
-
     const isValidOrder =
       orderDetails &&
       orderDetails.razorpay_order_id === razorpayOrderId &&
       orderDetails.order_status === 1 &&
       orderDetails.payment_status === 1;
+
     if (!isValidOrder) {
       return res
         .status(400)
@@ -140,7 +185,9 @@ const verifyOrder = async (req, res) => {
       }),
     ]);
 
-    return res.status(200).json({ ok: true, message: "Payment successful!" });
+    return res
+      .status(200)
+      .json({ ok: true, message: "Payment successful!", orderDetails });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -312,7 +359,9 @@ const addInitialData = async (req, res) => {
 };
 
 module.exports = {
+  getFullOrderDetilsById,
   createOrder,
   addInitialData,
   verifyOrder,
+  getOrder,
 };

@@ -4,6 +4,7 @@ const {
   QueryCategoryByParentId,
   UpdateCategoryById,
   QueryCategoryBySlug,
+  QueryCategoryAttributeValuesByCategoryId,
 } = require("../service/category.services");
 
 const {
@@ -220,7 +221,37 @@ const getCategoryBySlug = async (req, res) => {
   }
 };
 
+const getCategoryAttributeValuesByCategoryId = async (req, res) => {
+  try {
+    const category_id = req.params.id;
+    const result = await QueryCategoryAttributeValuesByCategoryId(category_id);
+    if (result === false) {
+      return res
+        .status(500)
+        .json({ ok: false, message: "Invalid Category Slug." });
+    } else {
+      const allRecord = result.map((item) => {
+        return {
+          ...item,
+          attribute_values: JSON.parse(item.attribute_values),
+        };
+      });
+
+      return res.status(200).json({
+        ok: true,
+        message: "Category Attribute Values Found.",
+        allRecord,
+      });
+    }
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ ok: false, message: "Something went wrong." });
+  }
+};
+
 module.exports = {
+  getCategoryAttributeValuesByCategoryId,
   addCategory,
   categoryHieratchy,
   deleteCategory,

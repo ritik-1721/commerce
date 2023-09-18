@@ -1,9 +1,11 @@
+import ProtectedRoute from "@/middleware/ProtectedRoute";
 import { NextSeo } from "next-seo";
 import Error from "next/error";
 import { ArrowRightTopIcon } from "@/components/icons";
 import CheckoutItem from "@/components/cart/CheckoutItem";
 import { GetOrderApi } from "@/utils/service";
 import CryptoJS from "crypto-js";
+import { API_URL } from "@/utils/constants";
 
 const OrderPage = ({ orderId, orderIdEnc, errorCode, orderDetails }) => {
   if (errorCode) {
@@ -12,7 +14,7 @@ const OrderPage = ({ orderId, orderIdEnc, errorCode, orderDetails }) => {
 
   const pStyle = { marginTop: 0, marginBottom: 0 };
   return (
-    <>
+    <ProtectedRoute>
       <NextSeo
         title={"Order #" + orderId + " | " + orderIdEnc}
         description="Next SEO packages simplifies the SEO management in Next Apps with less configurations"
@@ -57,23 +59,39 @@ const OrderPage = ({ orderId, orderIdEnc, errorCode, orderDetails }) => {
                 className="text-sm font-small leading-6 text-gray-800"
                 style={pStyle}
               >
-                Order number: #9483003
+                Order number: {orderDetails.order_no}
               </p>
               <p
                 className="text-sm font-small leading-6 text-gray-800"
                 style={pStyle}
               >
-                Date: January 23, 2022
+                Order Date: { new Date(orderDetails.order_datetime).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
-              <a
-                rel="noopener noreferrer"
-                target="_blank"
-                href="#"
-                className="text-sm text-blue-500 hover:underline "
+              <p
+                className="text-sm font-small leading-6 text-gray-800"
+                style={pStyle}
               >
-                View invoice
-                <ArrowRightTopIcon className="h-0 w-0 inline-block ml-1 -mt-1" />
-              </a>
+                Order Status: {orderDetails.status_name}
+              </p>
+              {orderDetails.invoice_no && (
+                <>
+                  <p
+                    className="text-sm font-small leading-6 text-gray-800"
+                    style={pStyle}
+                  >
+                    Invoice number: {orderDetails.invoice_no}
+                  </p>
+                  <a
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    href={`${API_URL}public/data/documents/invoice/${orderDetails.order_id}/invoice.pdf`}
+                    className="text-sm text-blue-500 hover:underline "
+                  >
+                    View invoice
+                    <ArrowRightTopIcon className="h-2 w-2 inline-block ml-1 -mt-1" />
+                  </a>
+                </>
+              )}
             </div>
             <div className="flex justify-start  py-4  item-start space-y-2  flex-col border-b border-gray-200 ">
               <h2 className="text-xl font-semibold mb-2">Shipping Address</h2>
@@ -172,7 +190,7 @@ const OrderPage = ({ orderId, orderIdEnc, errorCode, orderDetails }) => {
                 style={pStyle}
               >
                 {" "}
-                {orderDetails.payment_response?.method}
+                {orderDetails.payment_method}
               </p>
               <p
                 className="text-sm font-small leading-6 text-gray-800"
@@ -212,7 +230,7 @@ const OrderPage = ({ orderId, orderIdEnc, errorCode, orderDetails }) => {
           </div>
         </div>
       </div>
-    </>
+    </ProtectedRoute>
   );
 };
 

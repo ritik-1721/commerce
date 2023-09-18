@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { authModalActions } from "@/store/slice/authModalSlice";
 import { useCallback, memo } from "react";
 import Link from "next/link";
+import { getSocketWorker } from "@/utils/socketUtility";
 
 const Option = ({ attributes }) => {
   return (
@@ -59,8 +60,17 @@ const CartItem = ({ data }) => {
     img_link,
     product_description,
   } = data;
+  const worker = getSocketWorker();
+  const userId = useSelector((state) => state.auth.userDetails?.user_id);
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const dispatch = useDispatch();
+
+  const sendRefreshCart = useCallback(() => {
+    if (!userId) {
+      return false;
+    }
+    worker.postMessage({ type: "send-refresh-cart", data: userId });
+  }, [worker, userId]);
 
   const deleteHandler = useCallback(
     (event) => {
@@ -71,8 +81,10 @@ const CartItem = ({ data }) => {
         return false;
       }
       dispatch(DeleteFromCart(product_id));
+      sendRefreshCart();
+      sendRefreshCart();
     },
-    [dispatch, isAuthenticated, product_id]
+    [dispatch, isAuthenticated, product_id, sendRefreshCart]
   );
   const decreaseHandler = useCallback(
     (event) => {
@@ -83,8 +95,9 @@ const CartItem = ({ data }) => {
         return false;
       }
       dispatch(RemoveFromCart(product_id));
+      sendRefreshCart();
     },
-    [dispatch, isAuthenticated, product_id]
+    [dispatch, isAuthenticated, product_id, sendRefreshCart]
   );
 
   const increaseHandler = useCallback(
@@ -96,8 +109,9 @@ const CartItem = ({ data }) => {
         return false;
       }
       dispatch(AddToCart(product_id));
+      sendRefreshCart();
     },
-    [dispatch, isAuthenticated, product_id]
+    [dispatch, isAuthenticated, product_id, sendRefreshCart]
   );
   return (
     <div className="flex py-5 gap-3 md:gap-5 border-b">

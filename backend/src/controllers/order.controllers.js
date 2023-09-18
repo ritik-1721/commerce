@@ -1,3 +1,6 @@
+const puppeteer = require("puppeteer");
+const fs = require("fs");
+const path = require("path"); 
 const {
   razorpayInstance,
   razorpayVerifySignature,
@@ -10,13 +13,19 @@ const {
   QueryOrderByID,
   AddInitialStatusData,
   CreateOrderStatusLog,
+  GenerateOrderInvoiceNo,
+  QueryOrderListByUserId,
 } = require("../service/order.services");
 const {
   QueryCartByUserId,
   UpdateCartByUserId,
 } = require("../service/cart.services");
-const { getCurrentDateTime } = require("../helpers/local.helpers");
+const {
+  getCurrentDateTime,
+  numberToWords,
+} = require("../helpers/local.helpers");
 const { CreateAddress } = require("../service/address.services");
+const { isID } = require("../helpers/validate.helpers");
 
 // Define constants for address properties
 const SHIPPING_ADDRESS_FIELDS = [
@@ -78,15 +87,199 @@ const getFullOrderDetilsById = async (order_id) => {
     }
     return {
       ...orderDetails,
-      payment_request: orderDetails.payment_request?JSON.parse(orderDetails.payment_request):orderDetails.payment_request,
-      payment_response: orderDetails.payment_response?JSON.parse(orderDetails.payment_response):orderDetails.payment_response,
+      payment_request: orderDetails.payment_request
+        ? JSON.parse(orderDetails.payment_request)
+        : orderDetails.payment_request,
+      payment_response: orderDetails.payment_response
+        ? JSON.parse(orderDetails.payment_response)
+        : orderDetails.payment_response,
       billing_address: JSON.parse(orderDetails.billing_address),
       shipping_address: JSON.parse(orderDetails.shipping_address),
       orderItems: orderItems,
     };
   } catch (error) {
-    console.error("getFullOrderDetilsById",error);
+    console.error("getFullOrderDetilsById", error);
     return false;
+  }
+};
+
+const generateInvoice = async (order_id) => {
+  try {
+    const orderDetails = await getFullOrderDetilsById(order_id);
+    if (orderDetails === false) {
+      // res.send("Error.");
+      return false;
+    }
+    // puppeteer
+    const templateInvoicePath = path.join(
+      __dirname,
+      "..",
+      "public",
+      "data",
+      "template",
+      "invoice.html"
+    );
+
+    const orderDate = new Date(orderDetails.order_datetime).toLocaleDateString(
+      "en-US",
+      { year: "numeric", month: "long", day: "numeric" }
+    );
+
+    const billingAddress = `${orderDetails.billing_address.fname} ${orderDetails.billing_address.lname}, ${orderDetails.billing_address.email} <br> ${orderDetails.billing_address.street_address}, ${orderDetails.billing_address.apartment_suite_unit} <br> ${orderDetails.billing_address.city}, ${orderDetails.billing_address.pincode}, ${orderDetails.billing_address.state}, ${orderDetails.billing_address.country}`;
+
+    const shippingAddress = `${orderDetails.shipping_address.fname} ${orderDetails.shipping_address.lname}, ${orderDetails.shipping_address.email} <br> ${orderDetails.shipping_address.street_address}, ${orderDetails.shipping_address.apartment_suite_unit} <br> ${orderDetails.shipping_address.city}, ${orderDetails.shipping_address.pincode}, ${orderDetails.shipping_address.state}, ${orderDetails.shipping_address.country}`;
+
+    const grandTotal = orderDetails.order_amount;
+    const grandTotalInWords = numberToWords(parseFloat(grandTotal));
+
+    let orderItems = "";
+    orderDetails.orderItems.map((item, index) => {
+      const percent = item.gst_percentage; // 5%
+      const value = item.product_msp;
+      const result = (percent / 100) * value;
+
+      orderItems += `<tr>
+                  <td>${index + 1}</td>
+                  <td>${item.product_title}</td>
+                  <td><img src="${
+                    item.img_link
+                  }?w=50&h=50" alt="Product 2" class="product-image"></td>
+                  <td>${item.quantity}</td>
+                  <td>Rs. ${item.product_msp - result}</td>
+                  <td>Rs. 0.00</td>
+                  <td>Rs. 0.00 (0.00%)</td>
+                  <td>Rs. 0.00 (0.00%)</td>
+                  <td>Rs. ${result} (${item.gst_percentage}%)</td>
+                  <td>28.35</td>
+              </tr>`;
+    });
+
+    const dynamicData = {
+      orderItems,
+      orderDate,
+      grandTotal,
+      grandTotalInWords,
+      orderNumber: orderDetails.order_no,
+      invoiceNumber: orderDetails.invoice_no,
+      billingAddress,
+      shippingAddress,
+      // Add more dynamic data as needed
+    };
+    // launch a new chrome instance
+    const browser = await puppeteer.launch({ headless: true });
+
+    // create a new page
+    const page = await browser.newPage();
+
+    // Navigate to a blank page to clear any previous content
+    await page.goto("about:blank");
+
+    // set your html as the pages content
+    const html = fs.readFileSync(`${templateInvoicePath}`, "utf8");
+
+    const replacedHtml = html
+      .replace(/{{orderItems}}/g, dynamicData.orderItems)
+      .replace(/{{grandTotalInWords}}/g, dynamicData.grandTotalInWords)
+      .replace(/{{grandTotal}}/g, dynamicData.grandTotal)
+      .replace(/{{orderNumber}}/g, dynamicData.orderNumber)
+      .replace(/{{orderDate}}/g, dynamicData.orderDate)
+      .replace(/{{billingAddress}}/g, dynamicData.billingAddress)
+      .replace(/{{shippingAddress}}/g, dynamicData.shippingAddress)
+      .replace(/{{invoiceNumber}}/g, dynamicData.invoiceNumber);
+    // Add more replacements for additional dynamic data
+
+    await page.setContent(replacedHtml, {
+      waitUntil: "domcontentloaded",
+    });
+
+    // Wait for all images to load
+    await page.waitForSelector("img");
+
+    // Wait for all images to load
+    await page.waitForSelector("style");
+
+    // create a pdf buffer
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+    });
+
+    // F:\commerce\backend\src\public\data\documents\invoice\39\invoice.pdf
+    const invoicePath = path.join(
+      __dirname,
+      "..",
+      "public",
+      "data",
+      "documents",
+      "invoice",
+      `${order_id}`
+    );
+
+    if (!fs.existsSync(invoicePath)) {
+      fs.mkdirSync(invoicePath, { recursive: true }, (err) => {
+        throw new Error(err.message);
+      });
+    }
+    // or a .pdf file
+    await page.pdf({
+      format: "A4",
+      path: `${invoicePath}/invoice.pdf`,
+    });
+
+    // close the browser
+    await browser.close();
+
+    // Send the PDF as a response with appropriate headers
+    // res.setHeader("Content-Type", "application/pdf");
+    // res.setHeader(
+    //   "Content-Disposition",
+    //   "inline; filename=my-fance-invoice.pdf"
+    // ); // Opens in the browser
+    // res.send(pdfBuffer);
+    return true;
+  } catch {
+    // res.send("Error.");
+    return false;
+  }
+};
+
+const getOrderListById = async (req, res) => {
+  try {
+    const user_id = req.params.id;
+    if (!isID(user_id)) {
+      return res.status(500).json({ ok: false, message: "Invalid user-id." });
+    }
+    const list = await QueryOrderListByUserId(user_id);
+
+    if (list === false) {
+      return res.status(400).json({ ok: false, message: "No order found." });
+    }
+
+    const orderList =  await Promise.all( list.map( async (orderDetails) => {
+      const orderItems = await QueryOrderItemsByID(orderDetails.order_id);
+      return {
+        ...orderDetails,
+        payment_request: orderDetails.payment_request
+          ? JSON.parse(orderDetails.payment_request)
+          : orderDetails.payment_request,
+        payment_response: orderDetails.payment_response
+          ? JSON.parse(orderDetails.payment_response)
+          : orderDetails.payment_response,
+        billing_address: JSON.parse(orderDetails.billing_address),
+        shipping_address: JSON.parse(orderDetails.shipping_address),
+        orderItems,
+      };
+    }));
+    return res.status(200).json({
+      ok: true,
+      orderList,
+      message: "order Found.",
+    });
+  } catch (error) {
+    console.error("getOrderListById", error);
+    return res.status(500).json({
+      ok: false,
+      message: "Something went wrong.",
+    });
   }
 };
 
@@ -105,7 +298,7 @@ const getOrder = async (req, res) => {
       orderDetails,
     });
   } catch (error) {
-    console.error("getOrder",error);
+    console.error("getOrder", error);
     return res.status(500).json({
       ok: false,
       message: "Something went wrong.",
@@ -164,6 +357,7 @@ const verifyOrder = async (req, res) => {
     const successUpdatePayload = {
       payment_status: 2,
       payment_response: payment,
+      payment_method: payment.method,
       order_status: 4,
       updatedBy: user_id,
       updatedAt: currentDateTime,
@@ -185,6 +379,8 @@ const verifyOrder = async (req, res) => {
       }),
     ]);
 
+    const invoiceNo = await GenerateOrderInvoiceNo(orderDetails.order_id);
+    await generateInvoice(orderDetails.order_id);
     return res
       .status(200)
       .json({ ok: true, message: "Payment successful!", orderDetails });
@@ -305,9 +501,20 @@ const createOrder = async (req, res) => {
     };
     const order = await razorpayInstance.orders.create(options);
 
+    const orderNo = `EC/${new Date().getFullYear()}/OG`;
+    const totalOrderString = String(newOrder.order_id);
+    const zerosToAdd = 6 - totalOrderString.length;
+    let generateOrdereNo = null;
+    if (zerosToAdd > 0) {
+      const paddedTotalOrder = "0".repeat(zerosToAdd) + totalOrderString;
+      generateOrdereNo = orderNo + paddedTotalOrder;
+    } else {
+      generateOrdereNo = orderNo + totalOrderString;
+    }
     await UpdateOrderById(newOrder.order_id, {
       payment_gateway: "Razorpay",
       razorpay_order_id: order.id,
+      order_no: generateOrdereNo,
       payment_status: 1,
       payment_request: order,
     });
@@ -364,4 +571,6 @@ module.exports = {
   addInitialData,
   verifyOrder,
   getOrder,
+  generateInvoice,
+  getOrderListById,
 };

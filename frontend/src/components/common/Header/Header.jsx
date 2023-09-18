@@ -1,44 +1,55 @@
-import React, { useState } from 'react';
+import React, { useEffect, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import AuthModal from "../modal/AuthModal";
 import NavBar from "./nav/NavBar";
 import SideBar from "./nav/SideBar";
-
-
-
-
-
-
-
+import { getSocketWorker } from "@/utils/socketUtility";
+import { SetCart } from "@/store/thunks/cartThunk";
+import { SetWishlist } from "@/store/thunks/wishlistThunk";
 
 export default function Header() {
+  const worker = getSocketWorker();
+  const dispatch = useDispatch();
+  const userId = useSelector((state) => state.auth.userDetails?.user_id);
+  const fname = useSelector((state) => state.auth.userDetails?.fname);
 
-  
+  useEffect(() => {
+    console.log("work");
+    // Listen for incoming messages from the worker
+    worker.addEventListener("message", (e) => {
+      const { type, data } = e.data;
+      console.log("type", type, "data", data);
+      if (type === "refresh-cart") {
+        dispatch(SetCart());
+      } else if (type === "refresh-user") {
+        // dispatch(SetCart());
+      } else if (type === "refresh-wishlist") {
+        dispatch(SetWishlist());
+      }
+    });
+  }, [worker, dispatch]);
 
-  const handleMenuItemClick = (subitems) => {
-    setMenuHistory([...menuHistory, menuItems]); // Push current menu items to history
-    setMenuItems(subitems);
-  };
-
-  const handleBackClick = () => {
-    if (menuHistory.length > 0) {
-      const previousMenu = menuHistory.pop(); // Pop the last item from history
-      setMenuItems(previousMenu);
-      setMenuHistory([...menuHistory]); // Update history
+  const connectUserRoom = useCallback(() => {
+    if (!userId) {
+      return false;
     }
-  };
+    // Send a message to the Web Worker/
+    worker.postMessage({
+      type: "new-user",
+      data: { room: userId, name: fname },
+    });
+  }, [worker, userId, fname]);
 
-  return <header>
-    
-    {/* <div className="flex h-screen bg-gray-100">
-      <nav className="w-64 p-4 bg-white shadow-lg">
-        {menuHistory.length > 0 && (
-          <button onClick={handleBackClick} className="mb-4">
-            Back
-          </button>
-        )}
-        <Menu items={menuItems} onItemClick={handleMenuItemClick} />
-      </nav>
-      
-    </div> */}
-<AuthModal/><NavBar/><SideBar/></header>;
+  useEffect(() => {
+    connectUserRoom();
+  }, [userId, connectUserRoom]);
+
+  return (
+    <header>
+      {/* <button onClick={connectUserRoom}>JOIN</button> */}
+      <AuthModal />
+      <NavBar />
+      <SideBar />
+    </header>
+  );
 }

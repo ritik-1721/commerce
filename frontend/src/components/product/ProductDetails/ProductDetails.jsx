@@ -1,4 +1,3 @@
-// import ProductSlider from "@/components/product/ProductSlider/ProductSlider";
 import ProductSlider from "@/components/product/ProductSlider";
 import { CheckIcon } from "@/components/icons";
 import Button from "@/components/ui/Button/Button";
@@ -10,8 +9,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { AddToWishlist } from "@/store/thunks/wishlistThunk";
 import { authModalActions } from "@/store/slice/authModalSlice";
 import { AddToCart } from "@/store/thunks/cartThunk";
+import { getSocketWorker } from "@/utils/socketUtility";
+import parse from "html-react-parser";
 
 const ProductDetails = (props) => {
+  const worker = getSocketWorker();
+  const userId = useSelector((state) => state.auth.userDetails?.user_id);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -19,6 +22,20 @@ const ProductDetails = (props) => {
   }, []);
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const dispatch = useDispatch();
+
+  const sendRefreshWishlist = useCallback(() => {
+    if (!userId) {
+      return false;
+    }
+    worker.postMessage({ type: "send-refresh-wishlist", data: userId });
+  }, [worker, userId]);
+
+  const sendRefreshCart = useCallback(() => {
+    if (!userId) {
+      return false;
+    }
+    worker.postMessage({ type: "send-refresh-cart", data: userId });
+  }, [worker, userId]);
 
   const addToCartHandler = useCallback(
     (event) => {
@@ -29,8 +46,14 @@ const ProductDetails = (props) => {
         return false;
       }
       dispatch(AddToCart(props.productDetails.product_id));
+      sendRefreshCart();
     },
-    [dispatch, isAuthenticated, props.productDetails.product_id]
+    [
+      dispatch,
+      isAuthenticated,
+      props.productDetails.product_id,
+      sendRefreshCart,
+    ]
   );
 
   const addToWishlistHandler = useCallback(
@@ -42,8 +65,14 @@ const ProductDetails = (props) => {
         return false;
       }
       dispatch(AddToWishlist(props.productDetails.product_id));
+      sendRefreshWishlist();
     },
-    [dispatch, isAuthenticated, props.productDetails.product_id]
+    [
+      dispatch,
+      isAuthenticated,
+      props.productDetails.product_id,
+      sendRefreshWishlist,
+    ]
   );
 
   if (isLoading) {
@@ -51,9 +80,9 @@ const ProductDetails = (props) => {
   }
   return (
     <>
-      <section className="w-fit mx-auto grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 justify-items-center justify-center gap-y-20 gap-x-7  mt-10  md:mx-20 lg:mx-24 mb-5 ">
+      <section className="w-fit mx-auto grid grid-cols-1 lg:grid-cols-2 md:grid-cols-2 justify-items-center justify-center gap-y-20 gap-x-7  mt-10  md:mx-20 lg:mx-24 mb-5 ">
         {/* hover:scale-105 hover:shadow-xl */}
-        <div className="rounded-none  bg-white  duration-500  w-full h-auto lg:col-span-2 px-10 md:px-2 lg:px-2 ">
+        <div className="rounded-none  bg-white  duration-500  w-full h-auto lg:col-span-1 px-10 md:px-2 lg:px-2 ">
           <ProductSlider images={props.productDetails.images} />
         </div>
         <div className="rounded-none  bg-white duration-500 w-full h-auto lg:col-span-1 px-10 md:px-2 lg:px-2 ">
@@ -67,11 +96,14 @@ const ProductDetails = (props) => {
             <p className="text-lg font-semibold text-black cursor-auto my-3">
               ₹ {props.productDetails.product_msp}
             </p>
-            <del>
-              <p className="text-md text-gray-600 cursor-auto ml-2">
-                ₹ {props.productDetails.product_mrp}
-              </p>
-            </del>
+            {props.productDetails.product_msp <
+              props.productDetails.product_mrp && (
+              <del>
+                <p className="text-md text-gray-600 cursor-auto ml-2">
+                  ₹ {props.productDetails.product_mrp}
+                </p>
+              </del>
+            )}
           </div>
           <div>
             {props.productDetails.similarProductsAttributes.length > 0 &&
@@ -116,7 +148,7 @@ const ProductDetails = (props) => {
                                 <button
                                   type="button"
                                   className={`border ${
-                                    a.selectedProduct === 1
+                                    a.selectedProduct === 1 && a.attribute_value==="#000000" 
                                       ? `outline outline-black`
                                       : `outline outline-gray-300`
                                   } border-black outline-1 w-11 h-11 p-2.5 mr-2 text-center text-black hover:bg-gray-100 hover:outline-black font-semibold rounded-full text-sm items-center hover:scale-110
@@ -125,7 +157,7 @@ const ProductDetails = (props) => {
                                     backgroundColor: `${a.attribute_value}`,
                                   }}
                                 >
-                                  {a.selectedProduct === 1 && <CheckIcon />}
+                                  {a.selectedProduct === 1 && <CheckIcon color={`${a.attribute_value==="#000000"?"white":"black"}`} />}
                                   {a.selectedProduct === 0 && `  `}
                                 </button>
                               </Link>
@@ -139,12 +171,14 @@ const ProductDetails = (props) => {
               })}
           </div>
           <p className="pb-4 break-words w-full max-w-xl">
-            {props.productDetails.product_description}
+            {parse(props.productDetails.product_description)}
           </p>
-          <div className="pt-2 w-full flex flex-col">
-            <Button variant="slim" onClick={addToCartHandler} >Add To Bag</Button>
+          <div className="pt-2 w-full lg:px-11 flex flex-col">
+            <Button variant="slim" onClick={addToCartHandler}>
+              Add To Bag
+            </Button>
           </div>
-          <div className="pt-2 w-full  flex-col">
+          <div className="pt-2 w-full lg:px-11 flex-col">
             <Button variant="slim" onClick={addToWishlistHandler}>
               Save To Wishlist
             </Button>

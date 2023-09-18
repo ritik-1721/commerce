@@ -2,8 +2,8 @@ import ProductSlider from "@/components/product/ProductSlider";
 
 const ProductDetailsSkeleton = () => {
   return (
-    <section className="w-fit mx-auto grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 justify-items-center justify-center gap-y-20 gap-x-7  mt-10  md:mx-20 lg:mx-24 mb-5 ">
-      <div className="rounded-none  bg-white  duration-500  w-full h-auto lg:col-span-2 px-10 md:px-2 lg:px-2 ">
+    <section className="w-fit mx-auto grid grid-cols-1 lg:grid-cols-2 md:grid-cols-2 justify-items-center justify-center gap-y-20 gap-x-7  mt-10  md:mx-20 lg:mx-24 mb-5 ">
+      <div className="rounded-none  bg-white  duration-500  w-full h-auto lg:col-span-1 px-10 md:px-2 lg:px-2 ">
         <ProductSlider
           images={[{ img: "http://localhost:1000/static/images/gray-bg.jpg" }]}
         />

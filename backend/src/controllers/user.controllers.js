@@ -193,7 +193,124 @@ const logInUser = async (req, res) => {
   }
 };
 
+const updateUserById = async (req, res) => {
+  const currentDateTime = getCurrentDateTime();
+  try {
+    const userId = req.params.id;
+    const { fname, lname, email } = req.body;
+    if (Number(userId) <= 0) {
+      return res.status(401).json({
+        ok: false,
+        message: "Invalid user id.",
+      });
+    }
+    const info = { fname, lname, email, updatedAt: currentDateTime };
+    const result = await UpdateUserById(userId, info);
+    if (result === false) {
+      return res
+        .status(402)
+        .json({ ok: false, message: "Something went wrong." });
+    } else {
+      return res
+        .status(200)
+        .json({ ok: true, message: "Update successfully." });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      ok: false,
+      message: "Something went wrong.",
+    });
+  }
+};
+
+const updatePassword = async (req, res) => {
+  try {
+    const currentDateTime = getCurrentDateTime();
+    // const { user_id, oldPassword, newPassword, ReTypeNewPassword } =
+    //   req.body;
+    const user_id =
+      typeof req.body.userId === undefined || null || "" || 0
+        ? ""
+        : req.body.userId;
+    const oldPassword =
+      typeof req.body.oldPassword === undefined || null || ""
+        ? ""
+        : req.body.oldPassword;
+    const newPassword =
+      typeof req.body.newPassword === undefined || null || "" ? "" : req.body.newPassword;
+    const ReTypeNewPassword =
+      typeof req.body.ReTypeNewPassword === undefined || null || ""
+        ? ""
+        : req.body.ReTypeNewPassword;
+        
+    if (user_id.trim() == "") {
+      return res.status(400).json({
+        ok: false,
+        message: "Enter user_id!",
+      });
+    }
+    if (oldPassword.trim() == "") {
+      return res.status(400).json({
+        ok: false,
+        message: "Enter Previous Password!",
+      });
+    }
+    if (newPassword.trim() == "") {
+      return res.status(400).json({
+        ok: false,
+        message: "Enter New Password!",
+      });
+    }
+    if (ReTypeNewPassword.trim() == "") {
+      return res.status(400).json({
+        ok: false,
+        message: "Enter New Password Again!",
+      });
+    }
+
+    let existingRecord = await QueryUserById(user_id);
+    if (existingRecord == false) {
+      return res.status(400).json({
+        ok: false,
+        message: "Can't find existing record!",
+      });
+    }
+
+    if (!comparePassword(oldPassword, existingRecord.password)) {
+      return res.status(400).json({
+        ok: false,
+        message: "Your Old Password Is Incorrect!",
+      });
+    }
+    const hashedPwd = hashPassword(newPassword);
+    const info = {
+      password: hashedPwd,
+      updatedAt: currentDateTime,
+    };
+    const changePwd = await UpdateUserById(user_id, info);
+    if (changePwd === false) {
+      return res.status(402).json({
+        ok: false,
+        message: "Could Not Change Password. Please try again Later",
+      });
+    }
+    return res.status(200).json({
+      ok: true,
+      message: "Password has been updated.",
+    });
+  } catch (err) {
+    
+    console.log(err);
+    return res.status(500).json({
+      ok: false,
+      message: "Something went wrong.",
+    });
+  }
+};
+
 module.exports = {
+  updatePassword,
+  updateUserById,
   addUser,
   GetAllUsers,
   GetUser,

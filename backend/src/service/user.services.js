@@ -32,7 +32,7 @@ const QueryUserByEmail = async (email) => {
 // Returns User With Id
 const QueryUserById = async (user_id) => {
   try {
-    user = await UserMaster.findOne({
+    const user = await UserMaster.findOne({
       where: {
         user_id: Number(user_id),
         isDelete: false,
@@ -43,6 +43,8 @@ const QueryUserById = async (user_id) => {
     return false;
   }
 };
+
+
 
 // Returns List of Users
 const QueryListOfUsers = async () => {
@@ -67,6 +69,7 @@ const UpdateUserById = async (user_id, info) => {
     );
     return result[0] > 0 ? true : false;
   } catch (err) {
+    console.log(err);
     return false;
   }
 };

@@ -89,6 +89,7 @@ const LoginView = ({ onClose, onAuthViewChange }) => {
             resetEmailInput();
             resetPasswordInput();
             onClose();
+            router.reload()
           }
         } else {
           setErrorMessage("Something went wrong.");

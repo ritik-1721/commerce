@@ -1,7 +1,5 @@
 import { useRouter } from "next/router";
 
-const router = useRouter();
-
 export function getTokenDuration() {
   const storedExpirationDate = localStorage.getItem("expiration");
   const expirationDate = new Date(storedExpirationDate);
@@ -31,7 +29,9 @@ export function tokenLoader() {
   return token;
 }
 
-export function checkAuthLoader() {
+export function useCheckAuthLoader() {
+  const router = useRouter();
+
   const token = getAuthToken();
 
   if (!token) {

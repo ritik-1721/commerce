@@ -177,7 +177,15 @@ const getCart = async (req, res) => {
     const { user_id } = req.tokenData;
     const result = await QueryCartByUserId(user_id);
     if (result === false) {
-      return res.status(402).json({ ok: false, message: "Cart Empty." });
+      return res.status(200).json({
+        ok: true,
+        message: "Cart Empty.",
+        cart: {
+          items: [],
+          totalItems: 0,
+          totalAmount: 0,
+        },
+      });
     } else {
       let totalAmount = 0;
       const items = [];

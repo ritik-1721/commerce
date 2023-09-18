@@ -1,6 +1,6 @@
 import { NextSeo } from "next-seo";
 
-export default function aboutPage() {
+export default function AboutPage() {
   return (
     <>
       <NextSeo
@@ -31,7 +31,7 @@ export default function aboutPage() {
       <div className="max-w-2xl mx-8 sm:mx-auto py-20">
         <div className="text-base leading-7 max-w-6xl mx-auto">
           <h1 className="text-5xl font-semibold tracking-wide  mb-4 mt-8 ">
-            <em>About us</em>
+            <em>About Us</em>
           </h1>
           <p>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do

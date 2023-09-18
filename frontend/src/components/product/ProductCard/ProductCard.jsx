@@ -6,13 +6,15 @@ import {
   AddToWishlist,
   RemoveFromWishlist,
 } from "@/store/thunks/wishlistThunk";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, memo } from "react";
 import { authModalActions } from "@/store/slice/authModalSlice";
-import { useCallback, memo } from "react";
 import Image from "next/image";
 import { AddToCart } from "@/store/thunks/cartThunk";
+import { getSocketWorker } from "@/utils/socketUtility";
 
 const ProductCard = (props) => {
+  const worker = getSocketWorker();
+  const userId = useSelector((state) => state.auth.userDetails?.user_id);
   const {
     product_slug,
     img_link,
@@ -34,14 +36,29 @@ const ProductCard = (props) => {
     setLike(Boolean(wishlist_id));
   }, [wishlist_id]);
 
+  const sendRefreshWishlist = useCallback(() => {
+    if (!userId) {
+      return false;
+    }
+    worker.postMessage({ type: "send-refresh-wishlist", data: userId });
+  }, [worker, userId]);
+
+  const sendRefreshCart = useCallback(() => {
+    if (!userId) {
+      return false;
+    }
+    worker.postMessage({ type: "send-refresh-cart", data: userId });
+  }, [worker, userId]);
+
   const removeFromWishlistHandler = useCallback(
     (event) => {
       event.preventDefault();
       event.persist();
       dispatch(RemoveFromWishlist(product_id));
       setLike(false);
+      sendRefreshWishlist();
     },
-    [dispatch, product_id]
+    [dispatch, product_id, sendRefreshWishlist]
   );
 
   const addToCartHandler = useCallback(
@@ -53,8 +70,9 @@ const ProductCard = (props) => {
         return false;
       }
       dispatch(AddToCart(product_id));
+      sendRefreshCart();
     },
-    [dispatch, isAuthenticated, product_id]
+    [dispatch, isAuthenticated, product_id, sendRefreshCart]
   );
 
   const addToWishlistHandler = useCallback(
@@ -73,8 +91,9 @@ const ProductCard = (props) => {
         dispatch(RemoveFromWishlist(product_id));
         setLike(false);
       }
+      sendRefreshWishlist();
     },
-    [dispatch, isAuthenticated, like, product_id]
+    [dispatch, isAuthenticated, like, product_id, sendRefreshWishlist]
   );
 
   return (
@@ -98,9 +117,13 @@ const ProductCard = (props) => {
             <p className="text-sm font-semibold text-black cursor-auto my-3">
               ₹ {msp}
             </p>
-            <del>
-              <p className="text-xs text-gray-600 cursor-auto ml-2">₹ {mrp}</p>
-            </del>
+            {msp < mrp && (
+              <del>
+                <p className="text-xs text-gray-600 cursor-auto ml-2">
+                  ₹ {mrp}
+                </p>
+              </del>
+            )}
             <div className="flex md:order-2 ml-auto">
               {bagBtn && (
                 <button

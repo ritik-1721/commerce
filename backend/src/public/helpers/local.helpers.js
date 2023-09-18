@@ -28,3 +28,4 @@ const formatDate = (str, date = new Date()) => {
   }
   return date;
 };
+

@@ -13,11 +13,16 @@ import { drawerAction } from "@/store/slice/drawerSlice";
 import { useEffect } from "react";
 
 const MenuItem = ({ title, subitems, categorySlug, onItemClick }) => {
+  const dispatch = useDispatch();
+  const toggleDrawer = () => {
+    dispatch(drawerAction.toggleDrawer());
+  };
   const router = useRouter();
   const handleItemClick = () => {
     if (subitems.length > 0) {
       onItemClick(subitems);
     } else {
+      toggleDrawer();
       router.push(`/category/${categorySlug}`);
     }
   };
@@ -70,6 +75,7 @@ const Menu = ({ items, allItems, onItemClick }) => {
 
 const SideBar = () => {
   const dispatch = useDispatch();
+  const router = useRouter();
   const isOpen = useSelector((state) => state.drawer.isOpen);
   const links = useSelector((state) => state.navLink.links);
   const isLoading = useSelector((state) => state.navLink.isLoading);
@@ -154,7 +160,10 @@ const SideBar = () => {
                 <h3 className="-mx-2 -my-3 flow-root">
                   <button
                     className="flex w-full items-center justify-between bg-white px-2 py-3 text-gray-400 hover:text-gray-500"
-                    //   onClick={handleBackClick}
+                    onClick={() => {
+                      toggleDrawer();
+                      router.push(`/about`);
+                    }}
                   >
                     <span className="font-medium text-gray-900">About</span>
                   </button>
@@ -164,7 +173,10 @@ const SideBar = () => {
                 <h3 className="-mx-2 -my-3 flow-root">
                   <button
                     className="flex w-full items-center justify-between bg-white px-2 py-3 text-gray-400 hover:text-gray-500"
-                    //   onClick={handleBackClick}
+                    onClick={() => {
+                      toggleDrawer();
+                      router.push(`/contact`);
+                    }}
                   >
                     <span className="font-medium text-gray-900">Contact</span>
                   </button>

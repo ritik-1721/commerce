@@ -1,0 +1,211 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice</title>
+    <style>
+        /* Add your CSS styles here */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .invoice {
+            width: 95%;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            padding: 20px;
+            background-color: #fff; /* Set background color */
+        }
+        .logo-img{
+            max-width: 30px; /* Set the maximum width for the logo */
+            max-height: 30px; /* Set the maximum height for the logo */
+        }
+        .logo {
+            text-align: left;
+        }
+        .invoice h1 {
+            text-align: center;
+        }
+        .section {
+            margin-top: 10px;
+            padding: 5px; /* Add padding to sections */
+            border: 1px solid #ccc; /* Add borders to sections */
+            background-color: #f9f9f9; /* Set section background color */
+        }
+        .section-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            margin-top: 5px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .table th,
+        .table td {
+            border: 1px solid #ccc;
+            padding: 4px;
+            text-align: left;
+            font-size: 12px;
+        }
+        .table th {
+            background-color: #f0f0f0;
+        }
+        .table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .no-border-table {
+            border-collapse: collapse;
+            border: none;
+            margin-top: 5px;
+        }
+        .no-border-table td {
+            padding: 4px;
+            font-size: 14px;
+        }
+        .product-image {
+        max-width: 100px; /* Set the maximum width */
+        max-height: 100px; /* Set the maximum height */
+        display: block; /* Ensure the image is a block element */
+        margin: 0 auto; /* Center align the image horizontally */
+        border: 1px solid #ccc; /* Add a border around the image if needed */
+    }
+        .invoice-total {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .amount-in-words {
+            font-size: 14px;
+        }
+        hr {
+            border: none;
+            height: 1px;
+            background-color: #ccc; /* Horizontal line style */
+            margin: 10px 0; /* Add margin above and below hr */
+        }
+        .footer {
+            text-align: right;
+            font-size: 14px;
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice">
+        <div class="logo">
+            <img class="logo-img" src="http://localhost:1000/public/data/logo.png" alt="Company Logo">
+        </div>
+
+        <h1>Invoice</h1>
+        
+        <!-- Company Details -->
+        <div class="section">
+            <p class="section-title">Company Details</p>
+            <table class="no-border-table">
+                <tr>
+                    <td><strong>Company Name:</strong></td>
+                    <td>Company XYZ</td>
+                </tr>
+                <tr>
+                    <td><strong>Registration No.:</strong></td>
+                    <td>123456789</td>
+                </tr>
+                <tr>
+                    <td><strong>PAN No.:</strong></td>
+                    <td>ABCDE1234F</td>
+                </tr>
+                <tr>
+                    <td><strong>Company Address:</strong></td>
+                    <td>123 Main Street, City, Country</td>
+                </tr>
+            </table>
+        </div>
+        <hr> <!-- Add horizontal line after Company Details -->
+        
+        <!-- Shipping Details -->
+        <div class="section">
+            <p class="section-title">Shipping Details</p>
+            <table class="no-border-table">
+                <tr>
+                    <!-- <td><strong>Shipping Address:</strong></td> -->
+                    <td>{{shippingAddress}}</td>
+                </tr>
+            </table>
+        </div>
+        <hr> <!-- Add horizontal line after Shipping Details -->
+        
+        <!-- Billing Details -->
+        <div class="section">
+            <p class="section-title">Billing Details</p>
+            <table class="no-border-table">
+                <tr>
+                    <!-- <td><strong>Billing Address:</strong></td> -->
+                    <td>{{billingAddress}}</td>
+                </tr>
+            </table>
+        </div>
+        <hr> <!-- Add horizontal line after Billing Details -->
+        
+        <!-- Order Details -->
+        <div class="section">
+            <p class="section-title">Order Details</p>
+            <table class="no-border-table">
+                <tr>
+                    <td><strong>Order No:</strong></td>
+                    <td>{{orderNumber}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Invoice No:</strong></td>
+                    <td>{{invoiceNumber}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Order Date:</strong></td>
+                    <td>{{orderDate}}</td>
+                </tr>
+            </table>
+        </div>
+        <hr> <!-- Add horizontal line after Order Details -->
+        
+        <!-- Product Details -->
+        <div class="section">
+            <p class="section-title">Product Details</p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Product</th>
+                        <th>Image</th>
+                        <th>Qty</th>
+                        <th>Rate Per Unit</th>
+                        <th>Product Discount</th>
+                        <th>CGST</th>
+                        <th>SGST</th>
+                        <th>IGST</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{orderItems}}
+                    <tr>
+                        <td colspan="9" style="text-align:right;"><strong>Grand Total:</strong></td>
+                        <td>Rs. {{grandTotal}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="10"><strong>Amount in Words:</strong> {{grandTotalInWords}}</</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Footer -->
+        <hr> <!-- Add horizontal line before Footer -->
+        <div class="footer">
+            <p>Company XYZ - Email: company@xzy.com</p>
+        </div>
+    </div>
+</body>
+</html>

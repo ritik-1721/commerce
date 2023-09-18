@@ -366,7 +366,7 @@ const getProductDetailsByProductSlug = async (req, res) => {
 
 const getProductsCategorySlug = async (req, res) => {
   try {
-    const {filter} = req.body;
+    const { filter } = req.body;
     const { user_id } = req.query;
     const category_slug = req.params.slug;
     const result = await QueryCategoryBySlug(category_slug);

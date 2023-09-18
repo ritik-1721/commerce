@@ -31,6 +31,11 @@ module.exports = (sequelize, DataTypes, Sequelize) => {
         allowNull: true,
         comment: "(to store the Razorpay order ID)",
       },
+      payment_method: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "(to store the Payment Method)",
+      },
       payment_status: {
         type: DataTypes.INTEGER,
         allowNull: true,

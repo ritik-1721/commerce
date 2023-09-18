@@ -14,7 +14,19 @@ const adminRoutes = require("./routes/admin.routes");
 const apiRoutes = require("./routes/api.routes");
 
 const app = express();
-const port = process.env.PORT || 2000;
+const server = require("http").Server(app);
+const io = require("socket.io")(server, {
+  cors: {
+    origin: [
+      "http://localhost:1000",
+      "http://localhost:3000",
+      "http://localhost:8080",
+      "http://192.168.43.252:8080",
+    ],
+  },
+});
+
+const port = process.env.PORT || 1000;
 
 //serving public file
 app.use("/public", express.static(path.join(__dirname, "public")));
@@ -65,6 +77,79 @@ app.use("*", function (req, res) {
   });
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+const rooms = {};
+// room  => USER_ID
+
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+  console.log("A user rooms:", rooms);
+
+  // ** Add Socket ID IN User ID Room
+  socket.on("new-user", ({ room, name }) => {
+    if (!rooms[room]) {
+      io.emit("room-created", room);
+      rooms[room] = {};
+      rooms[room].users = {};
+    }
+    rooms[room].users[socket.id] = name;
+    socket.join(room);
+    io.to(room).emit("user-connected", name);
+    console.log("A rooms update:", rooms);
+  });
+
+  socket.on("send-refresh-cart", (room) => {
+    if (rooms[room]) {
+      socket.to(room).emit("refresh-cart", {
+        name: rooms[room].users[socket.id],
+      });
+    }
+    console.log("A send-refresh-cart:", room);
+  });
+
+  socket.on("send-refresh-user", (room) => {
+    if (rooms[room]) {
+      socket.to(room).emit("refresh-user", {
+        name: rooms[room].users[socket.id],
+      });
+    }
+    console.log("A send-refresh-user:", room);
+  });
+
+  socket.on("send-refresh-wishlist", (room) => {
+    if (rooms[room]) {
+      io.to(room).emit("refresh-wishlist", {
+        name: rooms[room].users[socket.id],
+      });
+    }
+    console.log("A send-refresh-wishlist:", room);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("A user disconnected:", socket.id);
+    const userRooms = getUserRooms(socket);
+
+    if (userRooms) {
+      userRooms.forEach((room) => {
+        try {
+          socket
+            .to(room)
+            .emit("user-disconnected", rooms[room].users[socket.id]);
+          delete rooms[room].users[socket.id];
+        } catch (error) {
+          console.error("Error handling user-disconnected event:", error);
+        }
+      });
+    }
+  });
+});
+
+function getUserRooms(socket) {
+  return Object.entries(rooms).reduce((names, [name, room]) => {
+    if (room.users[socket.id] != null) names.push(name);
+    return names;
+  }, []);
+}

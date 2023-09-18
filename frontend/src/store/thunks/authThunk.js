@@ -1,10 +1,9 @@
 import { authActions } from "@/store/slice/authSlice";
 import { setAuthenticationData, clearAuthenticationData } from "@/utils/auth";
 import { SetWishlist } from "@/store/thunks/wishlistThunk";
-// import { SetCart } from "@/store/thunks/cartThunk";
-import { SetCart } from "../thunks/cartThunk";
-
-
+import { SetCart } from "@/store/thunks/cartThunk";
+import { cartActions } from "@/store/slice/cartSlice";
+import { wishlistActions } from "../slice/wishlistSlice";
 
 export const loginUser = (data) => {
   return async (dispatch) => {
@@ -23,5 +22,8 @@ export const logoutUser = () => {
   return async (dispatch) => {
     clearAuthenticationData();
     await dispatch(authActions.logOut());
+    await dispatch(cartActions.replaceCart({ items: [], totalItems: 0, totalAmount: 0 }));
+    await dispatch(wishlistActions.setWishlist([]));
   };
 };
+

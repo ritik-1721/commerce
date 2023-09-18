@@ -13,7 +13,9 @@ const getWishlist = async (req, res) => {
     const { user_id } = req.tokenData;
     const result = await QueryWishlistByUserId(user_id);
     if (result === false) {
-      return res.status(402).json({ ok: false, message: "Wishlist Empty." });
+      return res
+        .status(200)
+        .json({ ok: true, wishlist: [], message: "Wishlist Empty." });
     } else {
       return res
         .status(200)

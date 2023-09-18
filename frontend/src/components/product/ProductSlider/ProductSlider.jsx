@@ -37,7 +37,7 @@ const ProductSlider = (props) => {
   }
 
   return (
-    <div style={{ height: "auto", width: "90%" }}>
+    <div style={{ height: "auto"  }} className="w-full" >
       <div className="relative">
         <Slider
           nextArrow={<></>}

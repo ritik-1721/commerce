@@ -9,6 +9,7 @@ const productRoutes = require("./product.routes");
 const wishlistRouter = require("./wishlist.routes");
 const cartRouter = require("./cart.routes");
 const orderRoutes = require("./order.routes");
+const pincodeRoutes = require("./pincode.routes");
 
 router.use("/order", orderRoutes);
 router.use("/user", userRoutes);
@@ -19,5 +20,6 @@ router.use("/category", categoryRoutes);
 router.use("/attribute", attributeRoutes);
 router.use("/attribute-value", attributeValueRoutes);
 router.use("/product", productRoutes);
+router.use("/pincode", pincodeRoutes);
 
 module.exports = router;

@@ -53,8 +53,8 @@ export default function HomePage() {
           </div>
           <div className="w-full md:w-1/2">
             <Image
-            width={500}
-            height={600}
+              width={500}
+              height={600}
               className="rounded-none"
               src="https://static.nike.com/a/images/f_auto/dpr_0.9,cs_srgb/w_1403,c_limit/43c74017-7bcd-4111-83b4-df8fd847584e/men-s-shoes-clothing-accessories.jpg"
               alt="Vortex"
@@ -64,14 +64,14 @@ export default function HomePage() {
         <div className="flex items-center flex-wrap mb-20">
           <div className="w-full md:w-1/2">
             <Image
-            width={500}
-            height={600}
+              width={500}
+              height={600}
               className="rounded-none"
               src="https://images.unsplash.com/photo-1590333748338-d629e4564ad9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=949&q=80"
               alt="use the force"
             />
           </div>
-          <div className="w-full md:w-1/2 pl-10">
+          <div className="w-full md:w-1/2 md:pl-10 sm:pt-4">
             <h4 className="text-3xl text-gray-800 font-bold mb-3">
               Use the Force!
             </h4>
@@ -97,8 +97,8 @@ export default function HomePage() {
           </div>
           <div className="w-full md:w-1/2">
             <Image
-            width={500}
-            height={600}
+              width={500}
+              height={600}
               className="rounded-none"
               src="https://images.unsplash.com/photo-1502886705388-d9f78783cc5f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxjb2xsZWN0aW9uLXBhZ2V8MXw5MjI3NjR8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=60"
               alt="Syncing"

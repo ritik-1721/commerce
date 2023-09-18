@@ -1,14 +1,29 @@
 import { useEffect, useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
-// import { loginUser, logoutUser } from "@/store/thunks/authThunk";
-import { loginUser, logoutUser } from "../../../store/thunks/authThunk";
+import { loginUser, logoutUser } from "@/store/thunks/authThunk";
 import { verifyTokenRequest } from "@/utils/service";
 import { retrieveAuthToken } from "@/utils/auth";
+import { useRouter } from "next/router";
 
 const TokenVerification = () => {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const dispatch = useDispatch();
+
+  const setLogoutTimer = useCallback(
+    (timeRemaining) => {
+      const logoutTimer = setTimeout(() => {
+        dispatch(logoutUser());
+        router.push("/");
+      }, timeRemaining);
+
+      return () => {
+        clearTimeout(logoutTimer);
+      };
+    },
+    [dispatch, router]
+  );
 
   const validateTokenFromAPI = useCallback(async () => {
     try {
@@ -20,17 +35,20 @@ const TokenVerification = () => {
 
         if (data.ok === false) {
           dispatch(logoutUser());
+          router.push("/");
         } else {
-          const now = new Date();
-          const exp = new Date(data.tokenData.exp);
-          const duration = now.getTime() - exp.getTime();
+          const now = Date.now(); // Use Date.now() to get the current time in milliseconds
+          const exp = new Date(data.tokenData.exp * 1000); // Convert exp to milliseconds
+          const timeRemaining = exp - now;
 
-          if (duration < 0) {
+          if (timeRemaining <= 0) {
             dispatch(logoutUser());
+            router.push("/");
           } else {
-            expirationDate = duration;
+            expirationDate = exp;
             console.log(expirationDate);
-            // setLogoutTimer(expirationDate);
+            // Set the logout timer with timeRemaining
+            setLogoutTimer(timeRemaining);
             dispatch(
               loginUser({ result: data.tokenData, token: tokenFromCookies })
             );
@@ -40,30 +58,15 @@ const TokenVerification = () => {
     } catch (error) {
       console.error("Error checking token validity:", error);
       dispatch(logoutUser());
+      router.push("/");
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch]);
+  }, [dispatch, router, setLogoutTimer]);
 
   useEffect(() => {
     validateTokenFromAPI();
   }, [validateTokenFromAPI]);
-
-  const setLogoutTimer = useCallback(
-    (expirationDate) => {
-      const currentTime = Date.now();
-      const timeRemaining = new Date(expirationDate).getTime() - currentTime;
-
-      const logoutTimer = setTimeout(() => {
-        dispatch(logoutUser());
-      }, timeRemaining);
-
-      return () => {
-        clearTimeout(logoutTimer);
-      };
-    },
-    [dispatch]
-  );
 
   return <div>{isLoading && <LoadingSpinner />}</div>;
 };

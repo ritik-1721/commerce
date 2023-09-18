@@ -43,7 +43,7 @@ export const fetchPost = async (url, body, requireAuthorization = false) => {
 };
 
 export const fetchUpdate = async (url, body, requireAuthorization = false) => {
-  return await createFetchRequest(url, "UPDATE", body, requireAuthorization);
+  return await createFetchRequest(url, "PUT", body, requireAuthorization);
 };
 
 export const fetchDelete = async (url, requireAuthorization = false) => {

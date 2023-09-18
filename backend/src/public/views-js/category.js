@@ -86,6 +86,7 @@ const getCategoryHieratchy = async () => {
     );
   }
 };
+
 $(document).ready(() => {
   getCategoryHieratchy();
 });

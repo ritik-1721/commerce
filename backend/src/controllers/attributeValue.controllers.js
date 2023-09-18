@@ -89,13 +89,19 @@ const addAttributeValue = async (req, res) => {
       attribute_id,
       attribute_value
     );
-    if (check === false) {
-    } else {
+    if (check !== false) {
       return res.status(402).json({
         ok: false,
         message: "Already Exist.",
       });
     }
+    // if (check === false) {
+    // } else {
+    //   return res.status(402).json({
+    //     ok: false,
+    //     message: "Already Exist.",
+    //   });
+    // }
     const info = {
       attribute_id: Number(attribute_id),
       attribute_value,

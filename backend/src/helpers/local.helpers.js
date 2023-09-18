@@ -27,6 +27,10 @@ const formatDate = (str, date = new Date()) => {
   const h = padTo2Digits(date.getHours()); //hours
   const i = padTo2Digits(date.getMinutes()); //minutes
   const s = padTo2Digits(date.getSeconds()); //seconds
+  
+  if (str === "yyyy") {
+    return `${yyyy}`;
+  }
   if (str === "yyyy-mm-dd") {
     return `${yyyy}-${mm}-${dd}`;
   }
@@ -87,7 +91,51 @@ function isEmptyObject(obj) {
   return true;
 }
 
+function numberToWords(number) {
+  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
+  const teens = ["", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+  const tens = ["", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  const thousands = ["", "Thousand", "Million", "Billion"];
+
+  function toWords(num) {
+      if (num === 0) return "Zero";
+      let result = "";
+      for (let i = 0; num > 0; i++) {
+          const chunk = num % 1000;
+          if (chunk !== 0) {
+              result = convert(chunk) + thousands[i] + " " + result;
+          }
+          num = Math.floor(num / 1000);
+      }
+      return result.trim();
+  }
+
+  function convert(num) {
+      if (num >= 100) {
+          return ones[Math.floor(num / 100)] + " Hundred " + convert(num % 100);
+      } else if (num >= 20) {
+          return tens[Math.floor(num / 10)] + " " + ones[num % 10];
+      } else if (num >= 11) {
+          return teens[num - 10];
+      } else {
+          return ones[num];
+      }
+  }
+
+  const dollars = Math.floor(number);
+  const cents = Math.round((number - dollars) * 100);
+
+  let result = toWords(dollars);
+  if (cents > 0) {
+      result += " and " + toWords(cents) + "/100";
+  }
+
+  return result;
+}
+
+
 module.exports = {
+  numberToWords,
   isEmptyObject,
   truncateString,
   generateUUID,

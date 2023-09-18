@@ -2,7 +2,7 @@ const ArrowRightTop = ({ ...props }) => {
   return (
     <svg
       aria-hidden="true"
-      class="h-3 w-3 inline-block ml-1 -mt-1"
+      ClassName="h-3 w-3 inline-block ml-1 -mt-1"
       viewBox="0 0 6 6"
       fill="currentColor"
       {...props}

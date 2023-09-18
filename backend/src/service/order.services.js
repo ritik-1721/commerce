@@ -34,20 +34,52 @@ const CreateOrder = async (info) => {
   }
 };
 
+const GenerateOrderInvoiceNo = async (orderId) => {
+  try {
+    const result = await db.sequelize.query(
+      ` select order_id from order_masters where isDelete=0 and payment_status=2 `,
+      { type: db.QueryTypes.SELECT }
+    );
+    const totalOrder = result.length > 0 ? result.length : false;
+    if (totalOrder === false) {
+      return false;
+    }
+    const invoiceNo = `EC/${new Date().getFullYear()}/IG`;
+    const totalOrderString = String(totalOrder);
+    const zerosToAdd = 6 - totalOrderString.length;
+    let generateInvoiceNo = null;
+    if (zerosToAdd > 0) {
+      const paddedTotalOrder = "0".repeat(zerosToAdd) + totalOrderString;
+      generateInvoiceNo = invoiceNo + paddedTotalOrder;
+    } else {
+      generateInvoiceNo = invoiceNo + totalOrderString;
+    }
+    const isSave = await UpdateOrderById(orderId, {
+      invoice_no: generateInvoiceNo,
+    });
+    return isSave;
+  } catch (error) {
+    console.error("Error:", error);
+    return false;
+  }
+};
+
 const QueryOrderItemsByID = async (order_id) => {
   const base_url = "http://localhost:1000/";
   try {
     const result = await db.sequelize.query(
       `SELECT  
                 t1.* ,
+                t1.price as product_msp,
+                0 as product_mrp,
                 t2.product_title,
                 t2.product_sub_title,
                 t2.product_description,
                 t2.product_slug,
                 t2.product_code,
                 t2.product_sku,
-                t2.product_msp,
-                t2.product_mrp,
+                /* t2.product_msp, */
+                /* t2.product_mrp, */
                 t3.gst_percentage,
                 t3.gst_id,
                 MIN(t2_1.priority),
@@ -67,6 +99,59 @@ const QueryOrderItemsByID = async (order_id) => {
     return result.length > 0 ? result : false;
   } catch (error) {
     console.log("ERROR QueryOrderItemsByID >>> ", error);
+    return false;
+  }
+};
+
+const QueryOrderListByUserId = async (user_id) =>{
+  try{
+    const result = await db.sequelize.query(
+      `SELECT
+          t1.*, t2.*,
+          ( 
+            SELECT  JSON_OBJECT(
+                          'email', t1_a.email,
+                          'lname', t1_a.lname,
+                          'fname', t1_a.fname,
+                          'receiver_mobile', t1_a.receiver_mobile,
+                          'alternative_mobile', t1_a.alternative_mobile,
+                          'apartment_suite_unit', t1_a.apartment_suite_unit,
+                          'street_address', t1_a.street_address,
+                          'city', t1_a.city,
+                          'state', t1_a.state,
+                          'pincode', t1_a.pincode,
+                          'country', t1_a.country,
+                          'address_type', 'Billing'
+                      )
+            FROM   address_masters t1_a
+            WHERE   t1_a.isDelete = 0 AND t1_a.address_id = t1.billing_address_id 
+          ) AS billing_address,
+          ( 
+            SELECT JSON_OBJECT(
+                          'email', t1_a.email,
+                          'lname', t1_a.lname,
+                          'fname', t1_a.fname,
+                          'receiver_mobile', t1_a.receiver_mobile,
+                          'alternative_mobile', t1_a.alternative_mobile,
+                          'apartment_suite_unit', t1_a.apartment_suite_unit,
+                          'street_address', t1_a.street_address,
+                          'city', t1_a.city,
+                          'state', t1_a.state,
+                          'pincode', t1_a.pincode,
+                          'country', t1_a.country,
+                          'address_type', 'Shipping'
+                      )
+             FROM   address_masters t1_a
+             WHERE  t1_a.isDelete = 0 AND t1_a.address_id = t1.shipping_address_id
+          ) AS shipping_address
+      FROM order_masters t1, order_statuses t2
+      WHERE t1.isDelete = 0 AND t1.user_id = ${user_id} AND t1.order_status = t2.status_id
+      ORDER BY t1.order_datetime desc;`,
+      { type: db.QueryTypes.SELECT }
+    );
+    return result.length > 0 ? result : false;
+  } catch (error) {
+    console.log(error);
     return false;
   }
 };
@@ -196,4 +281,6 @@ module.exports = {
   QueryOrderByID,
   CreateOrderStatusLog,
   QueryOrderItemsByID,
+  GenerateOrderInvoiceNo,
+  QueryOrderListByUserId,
 };

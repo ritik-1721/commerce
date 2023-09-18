@@ -1,6 +1,7 @@
 // import ShippingAddressForm from "@/components/checkout/ShippingAddressForm";
 import Wrapper from "@/components/ui/Wrapper";
 import { useDispatch, useSelector } from "react-redux";
+import NotFound from "@/components/common/NotFound/NotFound";
 import CryptoJS from "crypto-js";
 import { useRouter } from "next/router";
 import CheckoutItem from "@/components/cart/CheckoutItem";
@@ -9,9 +10,15 @@ import useInput from "@/hooks/use-input";
 import { isEmail, isNotEmpty, noValidate } from "@/hooks/use-validate";
 import Button from "@/components/ui/Button/Button";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { CreateOrderApi, VerifyOrderApi } from "@/utils/service";
+import {
+  CreateOrderApi,
+  VerifyOrderApi,
+  fetchPincodeDetails,
+} from "@/utils/service";
 import useRazorpay from "react-razorpay";
 import { SetCart } from "@/store/thunks/cartThunk";
+import { getSocketWorker } from "@/utils/socketUtility";
+import { BASE_URL } from "@/utils/constants";
 
 function SameAsBillingCheckbox({ sameAsBilling, onClick }) {
   return (
@@ -36,6 +43,8 @@ function SameAsBillingCheckbox({ sameAsBilling, onClick }) {
   );
 }
 export default function Page() {
+  const worker = getSocketWorker();
+  const userId = useSelector((state) => state.auth.userDetails?.user_id);
   const Razorpay = useRazorpay();
   const dispatch = useDispatch();
   const userDetails = useSelector((state) => state.auth.userDetails);
@@ -44,14 +53,14 @@ export default function Page() {
   const [formIsValid, setFormIsValid] = useState(false);
   const [sameAsBilling, setSameAsBilling] = useState(false);
   const router = useRouter();
-  const axios = { post: function post() {} };
-  function createVerify(data) {
-    return axios.post(`http://localhost:5000/api/verify`, data);
-  }
 
-  function getPaymentDetails(data) {
-    return axios.post(`http://localhost:5000/api/payDetails`, data);
-  }
+  const sendRefreshCart = useCallback(() => {
+    if (!userId) {
+      return false;
+    }
+    worker.postMessage({ type: "send-refresh-cart", data: userId });
+  }, [worker, userId]);
+
   const shippingAddressEmailInputRef = useRef(null);
   const shippingAddressFirstNameInputRef = useRef(null);
   const shippingAddressLastNameInputRef = useRef(null);
@@ -356,25 +365,37 @@ export default function Page() {
           key: "rzp_test_QwRkxxPsNKaaaQ", // Enter the Key ID generated from the Dashboard
           amount: result.amount,
           currency: result.currency,
-          name: "Soumya Corp.",
+          name: "E-Shop",
           description: "Test Transaction",
-          image: { logo: "" },
+          image: { logo: `${BASE_URL}/logo.png` },
           order_id: result.id,
           handler: async (response) => {
-            const formData = new FormData();
-            formData.set("razorpayPaymentId", response.razorpay_payment_id);
-            formData.set("razorpayOrderId", response.razorpay_order_id);
-            formData.set("razorpaySignature", response.razorpay_signature);
-            const req = await VerifyOrderApi(formData);
-            const data = await req.json();
-            if (data.ok == false) {
-              return false;
+            try {
+              setIsLoading(true);
+              setErrorMessage("");
+              const formData = new FormData();
+              formData.set("razorpayPaymentId", response.razorpay_payment_id);
+              formData.set("razorpayOrderId", response.razorpay_order_id);
+              formData.set("razorpaySignature", response.razorpay_signature);
+              const req = await VerifyOrderApi(formData);
+              const data = await req.json();
+              if (data.ok == false) {
+                setIsLoading(false);
+                setErrorMessage(data.massage);
+                return false;
+              }
+              setIsLoading(false);
+              dispatch(SetCart());
+              sendRefreshCart();
+              router.push(
+                `/order/${data.orderDetails.order_id}/${CryptoJS.SHA256(
+                  data.orderDetails.order_id.toString()
+                )}`
+              );
+            } catch (error) {
+              setIsLoading(false);
+              setErrorMessage("something went wrong");
             }
-            dispatch(SetCart());
-            
-            router.push(
-              `/order/${data.orderDetails.order_id}/${CryptoJS.SHA256(data.orderDetails.order_id.toString())}`
-            );
           },
           prefill: {
             name: userDetails.fname + " " + userDetails.lname,
@@ -385,17 +406,17 @@ export default function Page() {
             address: "Neosoft",
           },
           theme: {
-            color: "#3399cc",
+            color: "#090909",
           },
         };
         const paymentObject = new window.Razorpay(options);
         paymentObject.open();
         setIsLoading(false);
       } catch (error) {
-        console.log(error);
+        setErrorMessage("something went wrong");
       }
     },
-    [userDetails, router, dispatch]
+    [userDetails, router, dispatch, sendRefreshCart]
   );
 
   const formCheckoutHandler = useCallback(
@@ -405,7 +426,7 @@ export default function Page() {
       setIsLoading(true);
       if (!formIsValid) {
         setErrorMessage(
-          "Cannot find an account that matches the provided credentials."
+          "Please complete all required fields in the shipping address."
         );
         blurInputsHandler();
         setIsLoading(false);
@@ -465,12 +486,15 @@ export default function Page() {
         const data = await req.json();
         if (data.ok === false) {
           setErrorMessage(data.message);
+          setIsLoading(false);
         } else {
-          setErrorMessage(data.message);
+          setErrorMessage("");
           displayRazorpay(data.order);
+          setIsLoading(false);
         }
       } catch (error) {
-        alert(error.message);
+        setErrorMessage(error.massage);
+        setIsLoading(false);
       }
     },
     [
@@ -501,6 +525,97 @@ export default function Page() {
       sameAsBilling,
     ]
   );
+
+  const getShippingPincodeDetails = useCallback(async () => {
+    try {
+      if (enteredShippingAddressPincodeIsValid) {
+      }
+      const formData = new FormData();
+      formData.set("pincode", enteredShippingAddressPincode);
+      const req = await fetchPincodeDetails(formData);
+      const data = await req.json();
+      if (data.ok === false) {
+        shippingAddressCityChangedHandler({ target: { value: "" } });
+        shippingAddressStateChangedHandler({ target: { value: "" } });
+        shippingAddressCountryChangedHandler({ target: { value: "" } });
+        return false;
+      }
+      shippingAddressCityChangedHandler({
+        target: { value: data.pincodeDetails.city },
+      });
+      shippingAddressStateChangedHandler({
+        target: { value: data.pincodeDetails.state },
+      });
+      shippingAddressCountryChangedHandler({
+        target: { value: data.pincodeDetails.country },
+      });
+    } catch (error) {
+      shippingAddressCityChangedHandler({ target: { value: "" } });
+      shippingAddressStateChangedHandler({ target: { value: "" } });
+      shippingAddressCountryChangedHandler({ target: { value: "" } });
+    }
+  }, [
+    enteredShippingAddressPincodeIsValid,
+    shippingAddressCityChangedHandler,
+    shippingAddressStateChangedHandler,
+    shippingAddressCountryChangedHandler,
+    enteredShippingAddressPincode,
+  ]);
+
+  const getBillingPincodeDetails = useCallback(async () => {
+    try {
+      if (enteredBillingAddressPincodeIsValid) {
+      }
+      const formData = new FormData();
+      formData.set("pincode", enteredBillingAddressPincode);
+      const req = await fetchPincodeDetails(formData);
+      const data = await req.json();
+      if (data.ok === false) {
+        billingAddressCityChangedHandler({ target: { value: "" } });
+        billingAddressStateChangedHandler({ target: { value: "" } });
+        billingAddressCountryChangedHandler({ target: { value: "" } });
+        return false;
+      }
+      billingAddressCityChangedHandler({
+        target: { value: data.pincodeDetails.city },
+      });
+      billingAddressStateChangedHandler({
+        target: { value: data.pincodeDetails.state },
+      });
+      billingAddressCountryChangedHandler({
+        target: { value: data.pincodeDetails.country },
+      });
+    } catch (error) {
+      billingAddressCityChangedHandler({ target: { value: "" } });
+      billingAddressStateChangedHandler({ target: { value: "" } });
+      billingAddressCountryChangedHandler({ target: { value: "" } });
+    }
+  }, [
+    enteredBillingAddressPincodeIsValid,
+    billingAddressCityChangedHandler,
+    billingAddressStateChangedHandler,
+    billingAddressCountryChangedHandler,
+    enteredBillingAddressPincode,
+  ]);
+
+  const shippingPincodehandleBlur = useCallback(
+    (event) => {
+      shippingAddressPincodeBlurHandler(event);
+      getShippingPincodeDetails();
+    },
+    [shippingAddressPincodeBlurHandler, getShippingPincodeDetails]
+  );
+  const billingPincodehandleBlur = useCallback(
+    (event) => {
+      billingAddressPincodeBlurHandler(event);
+      getBillingPincodeDetails();
+    },
+    [billingAddressPincodeBlurHandler, getBillingPincodeDetails]
+  );
+
+  if(cartTotalItems <= 0){ 
+    return <NotFound view="CART_EMPTY_VIEW" />
+   }
   return (
     <>
       <Wrapper>
@@ -602,7 +717,6 @@ export default function Page() {
                     errorMessage={"Street address is required."}
                     innerRef={shippingAddressStreetAddressInputRef}
                   />
-
                   <div className="grid grid-cols-[122px_1fr] gap-x-2">
                     <LabelInput
                       id="shipping_address_pincode"
@@ -610,7 +724,7 @@ export default function Page() {
                       type="text"
                       placeholder=" "
                       onChange={shippingAddressPincodeChangedHandler}
-                      onBlur={shippingAddressPincodeBlurHandler}
+                      onBlur={shippingPincodehandleBlur}
                       value={enteredShippingAddressPincode}
                       inputHasError={shippingAddressPincodeInputHasError}
                       autoComplete="pincode"
@@ -811,7 +925,7 @@ export default function Page() {
                           type="text"
                           placeholder=" "
                           onChange={billingAddressPincodeChangedHandler}
-                          onBlur={billingAddressPincodeBlurHandler}
+                          onBlur={billingPincodehandleBlur}
                           value={enteredBillingAddressPincode}
                           inputHasError={billingAddressPincodeInputHasError}
                           autoComplete="pincode"
@@ -963,12 +1077,20 @@ export default function Page() {
                   </div>
                 </div>
                 {/* BUTTON START */}
+                {errorMessage && (
+                  <div className="pt-2 w-full  flex-col">
+                    <div className="text-red-700 border border-red-700 p-3">
+                      {errorMessage}
+                    </div>
+                  </div>
+                )}
+
                 <div className="pt-2 w-full  flex-col">
                   <Button
                     variant="slim"
                     className="h-[54px]"
                     onClick={formCheckoutHandler}
-                    // isLoading={isLoading}
+                    isLoading={isLoading}
                   >
                     CHECKOUT
                   </Button>
@@ -984,28 +1106,28 @@ export default function Page() {
                     </h3>
                   </div>
                   <div className="text-small-regular">
-                    <form className="w-full">
-                      <div className="grid grid-cols-[1fr_80px] gap-x-2 ">
-                        <LabelInput
-                          id="shipping_address.phone"
-                          name="shipping_address.phone"
-                          type="text"
-                          placeholder=" "
-                          onChange={null}
-                          onBlur={null}
-                          value={""}
-                          autoComplete="tel"
-                          inputHasError={null}
-                          label={"Code"}
-                          className={"bg-white"}
-                        />
-                        <div>
-                          <Button variant="slim" className="h-[54px]">
-                            Apply
-                          </Button>
-                        </div>
+                    {/* <form className="w-full"> */}
+                    <div className="grid grid-cols-[1fr_80px] gap-x-2 ">
+                      <LabelInput
+                        id="shipping_address.phone"
+                        name="shipping_address.phone"
+                        type="text"
+                        placeholder=" "
+                        onChange={null}
+                        onBlur={null}
+                        value={""}
+                        autoComplete="tel"
+                        inputHasError={null}
+                        label={"Code"}
+                        className={"bg-white"}
+                      />
+                      <div>
+                        <Button variant="slim" className="h-[54px]">
+                          Apply
+                        </Button>
                       </div>
-                    </form>
+                    </div>
+                    {/* </form> */}
                   </div>
                 </div>
               </div>
